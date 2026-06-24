@@ -1,0 +1,101 @@
+page {
+  min-height: 100vh;
+}
+
+.profile-page {
+  padding-bottom: 72rpx;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-radius: 16rpx;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 250, 255, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 55%, rgba(14, 165, 233, 0.05) 100%);
+  border: 1rpx solid #e5eaf3;
+  box-shadow: none;
+}
+
+.avatar {
+  width: 104rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  font-size: 44rpx;
+  font-weight: 900;
+  color: #ffffff;
+  background: #2563eb;
+  flex: none;
+}
+
+.profile-main {
+  flex: 1;
+  margin-left: 22rpx;
+}
+
+.profile-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 850;
+  color: #101828;
+}
+
+.profile-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  color: #667085;
+}
+
+.renew-button {
+  width: 128rpx;
+  height: 66rpx;
+  font-size: 24rpx;
+  flex: none;
+}
+
+.summary-card {
+  min-height: 152rpx;
+  margin-top: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 251, 255, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(255, 255, 255, 0) 62%, rgba(100, 116, 139, 0.035) 100%);
+}
+
+.menu-card {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.menu-row,
+.record-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.menu-row:last-child,
+.record-row:last-child {
+  border-bottom: 0;
+}
+
+.menu-arrow {
+  margin-left: 20rpx;
+  font-size: 42rpx;
+  color: #98a2b3;
+}
+
+.contact-card {
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(255, 255, 255, 0) 62%, rgba(14, 165, 233, 0.04) 100%);
+}
+
+.contact-button {
+  margin-top: 22rpx;
+}

@@ -1,0 +1,38 @@
+const {
+  profileMenus,
+} = require('../../data/mock')
+
+Page({
+  data: {
+    menus: profileMenus,
+    summary: [
+      { label: '本月检测', value: '42' },
+      { label: '剩余额度', value: '158' },
+      { label: '风险报告', value: '12' },
+      { label: 'TRO案件', value: '2' },
+    ],
+    records: [
+      { name: 'TikTok Shop关键词检测', date: '06-11 10:30', type: '关键词', level: 'medium', levelText: '中风险' },
+      { name: 'Temu批量产品复核', date: '06-10 16:15', type: '批量', level: 'high', levelText: '高风险' },
+      { name: 'Amazon图片元素检测', date: '06-09 11:02', type: '图片', level: 'low', levelText: '低风险' },
+    ],
+  },
+  openMenu(event) {
+    wx.showToast({
+      title: `${event.currentTarget.dataset.title}待接入`,
+      icon: 'none',
+    })
+  },
+  openMember() {
+    wx.showToast({
+      title: '会员支付待接入',
+      icon: 'none',
+    })
+  },
+  contactService() {
+    wx.showToast({
+      title: '客服接口待接入',
+      icon: 'none',
+    })
+  },
+})

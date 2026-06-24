@@ -1,0 +1,81 @@
+<view class="page-shell">
+  <view class="page-content lawyer-page">
+    <view class="lawyer-hero">
+      <view class="lawyer-photo-frame">
+        <image class="lawyer-photo" src="/assets/lawyers/wang-leilei-avatar.png" mode="aspectFill"></image>
+      </view>
+      <view class="lawyer-hero-main">
+        <text class="lawyer-name">{{lawyer.name}}</text>
+        <text class="lawyer-role">{{lawyer.firm}} · {{lawyer.role}}</text>
+        <view class="lawyer-badges">
+          <text class="badge badge-info">金牌律师</text>
+          <text class="badge badge-low">专业跨境咨询</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">专业介绍</text>
+      <view class="card">
+        <view class="profile-row">
+          <text class="profile-label">地域背景</text>
+          <text class="profile-value">{{lawyer.location}}</text>
+        </view>
+        <view class="profile-row">
+          <text class="profile-label">教育背景</text>
+          <text class="profile-value">{{lawyer.education}}</text>
+        </view>
+        <view class="profile-row">
+          <text class="profile-label">执业经历</text>
+          <text class="profile-value">{{lawyer.license}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">核心标签</text>
+      <view class="card">
+        <view class="info-row" wx:for="{{lawyer.highlights}}" wx:key="*this">
+          <text class="info-dot"></text>
+          <text class="info-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">荣誉与任职</text>
+      <view class="card">
+        <view class="info-row" wx:for="{{lawyer.honors}}" wx:key="*this">
+          <text class="info-dot info-dot-blue"></text>
+          <text class="info-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">代表案例</text>
+      <view class="card">
+        <view class="case-item" wx:for="{{lawyer.cases}}" wx:key="*this">
+          <text class="case-index">{{index + 1}}</text>
+          <text class="case-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">TRO服务对接</text>
+      <view class="card service-scenes">
+        <view class="service-scene" wx:for="{{serviceScenes}}" wx:key="*this">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="contact-card">
+        <text class="source-title">预约咨询</text>
+        <text class="source-desc">微信号：{{lawyer.consultWeChat}}</text>
+        <text class="source-note">点击下方按钮会复制微信号，随后请在微信中添加咨询。</text>
+        <view class="primary-button contact-button" bindtap="requestConsult">添加微信咨询</view>
+      </view>
+    </view>
+  </view>
+</view>

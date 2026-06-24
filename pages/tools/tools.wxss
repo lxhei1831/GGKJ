@@ -1,0 +1,78 @@
+page {
+  min-height: 100vh;
+}
+
+.tools-page {
+  padding-bottom: 72rpx;
+}
+
+.tools-hero {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 250, 255, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.065) 0%, rgba(255, 255, 255, 0) 55%, rgba(14, 165, 233, 0.05) 100%);
+}
+
+.tool-card {
+  min-height: 214rpx;
+  margin-top: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 251, 255, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.045) 0%, rgba(255, 255, 255, 0) 60%, rgba(100, 116, 139, 0.035) 100%);
+}
+
+.tool-icon {
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  border-radius: 12rpx;
+  margin-bottom: 18rpx;
+  text-align: center;
+  font-size: 23rpx;
+  font-weight: 850;
+  color: #ffffff;
+  background: #1d4ed8;
+}
+
+.template-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.template-row:last-child {
+  border-bottom: 0;
+}
+
+.mini-button {
+  width: 132rpx;
+  height: 66rpx;
+  margin-left: 20rpx;
+  flex: none;
+  font-size: 24rpx;
+}
+
+.assistant-card {
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(255, 255, 255, 0) 62%, rgba(14, 165, 233, 0.04) 100%);
+}
+
+.assistant-button {
+  margin-top: 22rpx;
+}
+
+.service-card {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.service-pill {
+  margin: 0 12rpx 12rpx 0;
+  padding: 14rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: #334155;
+  background: #eef2f7;
+}

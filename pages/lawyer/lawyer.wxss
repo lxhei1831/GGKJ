@@ -1,0 +1,199 @@
+page {
+  min-height: 100vh;
+}
+
+.lawyer-page {
+  padding-bottom: 160rpx;
+}
+
+.lawyer-hero {
+  display: flex;
+  align-items: center;
+  padding: 34rpx;
+  border-radius: 16rpx;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 250, 255, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 55%, rgba(14, 165, 233, 0.05) 100%);
+  color: #111827;
+  border: 1rpx solid #e5eaf3;
+  box-shadow: none;
+}
+
+.lawyer-photo-frame {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  flex: none;
+  background: #eef2f7;
+}
+
+.lawyer-photo {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.lawyer-hero-main {
+  margin-left: 24rpx;
+  flex: 1;
+}
+
+.lawyer-name {
+  display: block;
+  font-size: 40rpx;
+  line-height: 1.18;
+  font-weight: 900;
+}
+
+.lawyer-role {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.lawyer-badges {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 18rpx;
+}
+
+.lawyer-badges .badge {
+  margin-right: 12rpx;
+}
+
+.profile-row {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.profile-row:last-child {
+  border-bottom: 0;
+}
+
+.profile-label {
+  display: block;
+  font-size: 23rpx;
+  color: #667085;
+}
+
+.profile-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 27rpx;
+  line-height: 1.45;
+  color: #182230;
+  font-weight: 700;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 18rpx;
+}
+
+.info-row:first-child {
+  margin-top: 0;
+}
+
+.info-dot {
+  width: 14rpx;
+  height: 14rpx;
+  margin-top: 14rpx;
+  border-radius: 999rpx;
+  background: #2563eb;
+  flex: none;
+}
+
+.info-dot-blue {
+  background: #1d4ed8;
+}
+
+.info-text {
+  margin-left: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.55;
+  color: #344054;
+}
+
+.case-item {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 22rpx;
+}
+
+.case-item:first-child {
+  margin-top: 0;
+}
+
+.case-index {
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 22rpx;
+  font-weight: 800;
+  color: #ffffff;
+  background: #2563eb;
+  flex: none;
+}
+
+.case-text {
+  margin-left: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.55;
+  color: #344054;
+}
+
+.service-scenes {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.service-scene {
+  margin: 0 12rpx 12rpx 0;
+  padding: 14rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 23rpx;
+  color: #1d4ed8;
+  background: #e8f0ff;
+}
+
+.contact-card {
+  padding: 26rpx;
+  border-radius: 16rpx;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(255, 255, 255, 0) 62%, rgba(14, 165, 233, 0.04) 100%);
+  border: 1rpx solid #e5eaf3;
+}
+
+.source-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 850;
+  color: #182230;
+}
+
+.source-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #667085;
+}
+
+.source-note {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #98a2b3;
+}
+
+.contact-button {
+  margin-top: 22rpx;
+}

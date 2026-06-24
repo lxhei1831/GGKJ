@@ -1,0 +1,90 @@
+<view class="page-shell">
+  <view class="page-content risk-page">
+    <view class="hero-panel">
+      <view class="hero-top">
+        <text class="eyebrow">跨境侵权风险管理</text>
+        <text class="hero-badge">实时预警</text>
+      </view>
+      <text class="hero-title">店铺上架前，先看风险分布</text>
+      <text class="hero-desc">聚合品牌词、TRO案件、图片元素和检测报告，快速定位需要先处理的商品。</text>
+      <view class="hero-metrics">
+        <view class="hero-metric" wx:for="{{metrics}}" wx:key="label">
+          <text class="hero-metric-value">{{item.value}}</text>
+          <text class="hero-metric-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view>
+          <text class="section-title">快捷检测</text>
+          <text class="section-subtitle">按场景进入检测模块，后续统一生成报告。</text>
+        </view>
+      </view>
+      <view class="grid-two">
+        <view class="grid-item" wx:for="{{quickActions}}" wx:key="mode">
+          <view class="card action-card action-{{item.tone}}" bindtap="goDetect" data-mode="{{item.mode}}">
+            <view class="action-mark"></view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">今日风险概览</text>
+      <view class="grid-two">
+        <view class="grid-item" wx:for="{{metrics}}" wx:key="label">
+          <view class="card metric-card">
+            <text class="metric-label">{{item.label}}</text>
+            <text class="metric-value">{{item.value}}</text>
+            <view class="badge badge-{{item.level}}">{{item.change}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">高危提醒</text>
+      <view class="card" wx:for="{{alertGroups}}" wx:key="title">
+        <view class="row-between">
+          <text class="card-title">{{item.title}}</text>
+          <text class="badge badge-info">今日更新</text>
+        </view>
+        <view class="tag-cloud">
+          <text class="risk-tag" wx:for="{{item.items}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view>
+          <text class="section-title">最近检测报告</text>
+          <text class="section-subtitle">报告下载和分享入口后续接入文件服务。</text>
+        </view>
+      </view>
+      <view class="card report-list">
+        <view class="list-row report-row" wx:for="{{recentReports}}" wx:key="name">
+          <view>
+            <text class="card-title">{{item.name}}</text>
+            <text class="card-desc">{{item.date}} · 风险分 {{item.score}}</text>
+          </view>
+          <text class="badge badge-{{item.levelKey}}">{{item.level}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="card emergency-card">
+        <view>
+          <text class="card-title">紧急TRO案件咨询</text>
+          <text class="card-desc">收到法院文件、平台冻结或律所邮件时，优先整理材料并进入应急流程。</text>
+        </view>
+        <view class="secondary-button compact-button" bindtap="goTro">进入应急</view>
+      </view>
+    </view>
+  </view>
+</view>

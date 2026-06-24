@@ -1,0 +1,107 @@
+<view class="page-shell">
+  <view class="page-content tro-page">
+    <view class="hero-panel tro-hero">
+      <text class="eyebrow">冻结与和解响应</text>
+      <text class="hero-title">收到TRO通知后，先完成案件自查</text>
+      <text class="hero-desc">记录平台、案件号、原告品牌和冻结金额，生成初步风险等级与材料清单。</text>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view>
+          <text class="section-title">案件自查</text>
+          <text class="section-subtitle">该评估为初步辅助结果，正式处理建议由律师复核。</text>
+        </view>
+      </view>
+
+      <view class="input-card">
+        <view class="field">
+          <text class="field-label">涉案平台</text>
+          <picker mode="selector" range="{{platforms}}" value="{{platformIndex}}" bindchange="bindPlatformChange">
+            <view class="picker-field">{{selectedPlatform}}</view>
+          </picker>
+        </view>
+        <view class="field">
+          <text class="field-label">案件号</text>
+          <input class="text-input" placeholder="如 24-cv-xxxxx" value="{{caseForm.caseNo}}" data-field="caseNo" bindinput="bindInput" />
+        </view>
+        <view class="field">
+          <text class="field-label">原告品牌或IP</text>
+          <input class="text-input" placeholder="输入品牌、律所、IP名称" value="{{caseForm.brand}}" data-field="brand" bindinput="bindInput" />
+        </view>
+        <view class="field">
+          <text class="field-label">冻结金额</text>
+          <input class="text-input" type="number" placeholder="输入冻结金额，单位美元" value="{{caseForm.freezeAmount}}" data-field="freezeAmount" bindinput="bindInput" />
+        </view>
+        <view class="primary-button tro-button" bindtap="analyzeCase">生成应急建议</view>
+      </view>
+    </view>
+
+    <view class="section" wx:if="{{caseResult}}">
+      <text class="section-title">自查结果</text>
+      <view class="card">
+        <view class="row-between">
+          <view>
+            <text class="card-title">{{caseResult.title}}</text>
+            <text class="card-desc">{{caseResult.desc}}</text>
+          </view>
+          <text class="badge badge-{{caseResult.level}}">{{caseResult.levelText}}</text>
+        </view>
+        <view class="divider"></view>
+        <view class="case-action" wx:for="{{caseResult.actions}}" wx:key="*this">
+          <text class="case-action-dot"></text>
+          <text class="case-action-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">应急功能</text>
+      <view class="grid-two">
+        <view class="grid-item" wx:for="{{modules}}" wx:key="title">
+          <view class="card module-card">
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">律师服务</text>
+      <view class="card lawyer-service-card" bindtap="openLawyerProfile">
+        <view class="lawyer-service-top">
+          <view class="lawyer-avatar">律</view>
+          <view class="lawyer-service-main">
+            <text class="card-title">TRO应急律师对接</text>
+            <text class="card-desc">查看示例律师专业介绍，后续可接入预约、材料审核和案件跟进服务。</text>
+          </view>
+          <text class="menu-arrow">›</text>
+        </view>
+        <view class="lawyer-tags">
+          <text class="lawyer-tag">案件材料审核</text>
+          <text class="lawyer-tag">和解策略评估</text>
+          <text class="lawyer-tag">平台沟通建议</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">材料清单</text>
+      <view class="card">
+        <view class="check-row" wx:for="{{checklist}}" wx:key="*this">
+          <text class="check-box"></text>
+          <text class="check-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="card brand-library">
+        <text class="card-title">TRO高危品牌库</text>
+        <text class="card-desc">搜索高频起诉品牌、律所、IP，后续可接入实时数据库与订阅提醒。</text>
+        <view class="secondary-button library-button" bindtap="openLibrary">查看品牌库</view>
+      </view>
+    </view>
+  </view>
+</view>

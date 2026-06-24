@@ -1,0 +1,159 @@
+<view class="page-shell">
+  <view class="page-content detect-page">
+    <view class="hero-panel detect-hero">
+      <text class="eyebrow">AI风险评估中心</text>
+      <text class="hero-title">按市场规则精细化检测</text>
+      <text class="hero-desc">选择平台和目标国家/地区后，再上传图片、表格或输入Listing内容，检测结果会按对应市场风险偏好输出。</text>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view>
+          <text class="section-title">检测场景</text>
+          <text class="section-subtitle">当前：{{activeModeLabel}} · {{selectedCountryRegion}}</text>
+        </view>
+      </view>
+      <view class="mode-board">
+        <view
+          class="mode-card {{activeMode === item.key ? 'mode-card-active' : ''}}"
+          wx:for="{{modeTabs}}"
+          wx:key="key"
+          bindtap="selectMode"
+          data-mode="{{item.key}}"
+        >
+          <view class="mode-card-top">
+            <text class="mode-mark">{{item.mark}}</text>
+            <text class="mode-state" wx:if="{{activeMode === item.key}}">已选</text>
+          </view>
+          <text class="mode-label">{{item.label}}</text>
+          <text class="mode-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view>
+          <text class="section-title">检测信息</text>
+          <text class="section-subtitle">{{activeModeDesc}}</text>
+        </view>
+        <text class="badge badge-info">{{modelStatus.status}}</text>
+      </view>
+
+      <view class="input-card">
+        <view class="selector-grid">
+          <view class="selector-item">
+            <text class="field-label">销售平台</text>
+            <picker mode="selector" range="{{platforms}}" value="{{platformIndex}}" bindchange="bindPlatformChange">
+              <view class="picker-field">{{selectedPlatform}}</view>
+            </picker>
+          </view>
+          <view class="selector-item">
+            <text class="field-label">国家/地区</text>
+            <picker mode="selector" range="{{countryRegions}}" value="{{countryIndex}}" bindchange="bindCountryChange">
+              <view class="picker-field">{{selectedCountryRegion}}</view>
+            </picker>
+          </view>
+        </view>
+
+        <block wx:if="{{activeMode === 'product'}}">
+          <view class="field">
+            <text class="field-label">产品链接</text>
+            <input class="text-input" placeholder="粘贴Amazon、Temu、TikTok Shop等产品链接" value="{{form.productUrl}}" data-field="productUrl" bindinput="bindInput" />
+          </view>
+          <view class="field">
+            <text class="field-label">产品标题或Listing关键词</text>
+            <textarea class="text-area" placeholder="输入标题、五点描述、品牌词、类目等信息" value="{{form.productTitle}}" data-field="productTitle" bindinput="bindInput"></textarea>
+          </view>
+        </block>
+
+        <block wx:if="{{activeMode === 'image' || activeMode === 'patent'}}">
+          <view class="upload-panel" bindtap="chooseImage">
+            <text wx:if="{{form.imageCount}}" class="upload-title">已选择 {{form.imageCount}} 张图片</text>
+            <text wx:else class="upload-title">上传产品图或图案图</text>
+            <text class="upload-desc">用于识别Logo、IP角色、肖像、POD图案和外观专利风险。</text>
+          </view>
+          <view class="field">
+            <text class="field-label">图片说明</text>
+            <textarea class="text-area" placeholder="补充图片中的品牌元素、图案来源、产品类目" value="{{form.copyText}}" data-field="copyText" bindinput="bindInput"></textarea>
+          </view>
+        </block>
+
+        <block wx:if="{{activeMode === 'keyword'}}">
+          <view class="field">
+            <text class="field-label">关键词列表</text>
+            <textarea class="text-area" placeholder="输入标题、Search Terms、广告词或竞品关键词" value="{{form.keywordText}}" data-field="keywordText" bindinput="bindInput"></textarea>
+          </view>
+        </block>
+
+        <block wx:if="{{activeMode === 'copy'}}">
+          <view class="field">
+            <text class="field-label">文案内容</text>
+            <textarea class="text-area large-area" placeholder="粘贴A+页面、详情页、广告文案或申诉文案" value="{{form.copyText}}" data-field="copyText" bindinput="bindInput"></textarea>
+          </view>
+        </block>
+
+        <block wx:if="{{activeMode === 'batch'}}">
+          <view class="upload-panel" bindtap="chooseBatchFile">
+            <text class="upload-title">{{form.batchFileName || '上传Excel批量检测表'}}</text>
+            <text class="upload-desc">建议包含平台、目标市场、链接、标题、类目、图片URL、销售额等字段。</text>
+          </view>
+          <view class="field">
+            <text class="field-label">批量检测备注</text>
+            <textarea class="text-area" placeholder="说明重点类目、店铺名称或需要关注的品牌词" value="{{form.copyText}}" data-field="copyText" bindinput="bindInput"></textarea>
+          </view>
+        </block>
+
+        <view class="model-note">
+          <text class="model-note-title">{{modelStatus.name}}</text>
+          <text class="model-note-desc">{{modelStatus.desc}}</text>
+        </view>
+
+        <view class="button-row">
+          <view class="ghost-button button-half" bindtap="resetForm">清空</view>
+          <view class="primary-button button-half" bindtap="runDetection">
+            <block wx:if="{{loading}}">检测中...</block>
+            <block wx:else>开始检测</block>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section" wx:if="{{result}}">
+      <text class="section-title">检测报告</text>
+      <view class="card result-card">
+        <view class="result-top">
+          <view>
+            <text class="result-score">{{result.score}}</text>
+            <text class="metric-label">综合风险分</text>
+          </view>
+          <view class="result-level">
+            <text class="badge badge-{{result.level.key}}">{{result.level.text}}</text>
+            <text class="card-desc">{{result.jurisdiction}} · {{result.generatedAt}}</text>
+          </view>
+        </view>
+        <view class="divider"></view>
+        <view class="row-between">
+          <text class="card-title">是否建议上架</text>
+          <text wx:if="{{result.canPublish}}" class="badge badge-low">可继续复核</text>
+          <text wx:else class="badge badge-high">暂缓上架</text>
+        </view>
+        <view class="risk-block" wx:for="{{result.riskItems}}" wx:key="title">
+          <view class="row-between">
+            <text class="risk-block-title">{{item.title}}</text>
+            <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
+          </view>
+          <text class="card-desc">{{item.detail}}</text>
+        </view>
+      </view>
+
+      <view class="card">
+        <text class="card-title">处理建议</text>
+        <view class="suggestion-row" wx:for="{{result.suggestions}}" wx:key="*this">
+          <text class="suggestion-index">{{index + 1}}</text>
+          <text class="suggestion-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

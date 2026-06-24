@@ -1,0 +1,221 @@
+page {
+  min-height: 100vh;
+}
+
+.detect-page {
+  padding-bottom: 72rpx;
+}
+
+.detect-hero {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 250, 255, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(255, 255, 255, 0) 50%, rgba(14, 165, 233, 0.05) 100%);
+}
+
+.mode-board {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 10rpx -8rpx 0;
+}
+
+.mode-card {
+  width: calc(50% - 16rpx);
+  min-height: 166rpx;
+  margin: 8rpx;
+  padding: 22rpx;
+  border-radius: 16rpx;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(249, 251, 254, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(255, 255, 255, 0) 60%, rgba(100, 116, 139, 0.035) 100%);
+  border: 1rpx solid #dbe3ef;
+  box-sizing: border-box;
+}
+
+.mode-card-active {
+  border-color: #2563eb;
+  background:
+    linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.09) 0%, rgba(255, 255, 255, 0) 56%, rgba(14, 165, 233, 0.07) 100%);
+  box-shadow: 0 8rpx 22rpx rgba(37, 99, 235, 0.08);
+}
+
+.mode-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.mode-mark {
+  width: 44rpx;
+  height: 44rpx;
+  line-height: 44rpx;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 23rpx;
+  font-weight: 850;
+  color: #1d4ed8;
+  background: #e8f0ff;
+}
+
+.mode-state {
+  padding: 7rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.mode-label {
+  display: block;
+  font-size: 27rpx;
+  font-weight: 800;
+  color: #111827;
+}
+
+.mode-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 21rpx;
+  line-height: 1.35;
+  color: #64748b;
+}
+
+.selector-grid {
+  display: flex;
+  margin: 0 -8rpx;
+}
+
+.selector-item {
+  width: 50%;
+  padding: 0 8rpx;
+  box-sizing: border-box;
+}
+
+.upload-panel {
+  margin-top: 22rpx;
+  padding: 28rpx;
+  border-radius: 16rpx;
+  border: 1rpx dashed #94a3b8;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(255, 255, 255, 0) 62%, rgba(14, 165, 233, 0.04) 100%);
+}
+
+.upload-title {
+  display: block;
+  font-size: 27rpx;
+  font-weight: 800;
+  color: #111827;
+}
+
+.upload-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.large-area {
+  min-height: 260rpx;
+}
+
+.model-note {
+  margin-top: 24rpx;
+  padding: 22rpx;
+  border-radius: 16rpx;
+  background:
+    linear-gradient(180deg, #f8fbff 0%, #edf5ff 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.055) 0%, rgba(255, 255, 255, 0) 58%, rgba(14, 165, 233, 0.05) 100%);
+  border: 1rpx solid #dbeafe;
+}
+
+.model-note-title {
+  display: block;
+  font-size: 25rpx;
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+.model-note-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.button-row {
+  display: flex;
+  margin: 24rpx -8rpx 0;
+}
+
+.button-half {
+  flex: 1;
+  margin: 0 8rpx;
+}
+
+.result-card {
+  overflow: hidden;
+}
+
+.result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-score {
+  display: block;
+  font-size: 70rpx;
+  line-height: 1;
+  font-weight: 900;
+  color: #2563eb;
+}
+
+.result-level {
+  text-align: right;
+}
+
+.risk-block {
+  margin-top: 22rpx;
+  padding: 22rpx;
+  border-radius: 16rpx;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.035) 0%, rgba(255, 255, 255, 0) 62%, rgba(100, 116, 139, 0.035) 100%);
+  border: 1rpx solid #e5eaf3;
+}
+
+.risk-block-title {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #111827;
+}
+
+.suggestion-row {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 20rpx;
+}
+
+.suggestion-index {
+  width: 38rpx;
+  height: 38rpx;
+  line-height: 38rpx;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 21rpx;
+  font-weight: 800;
+  color: #ffffff;
+  background: #2563eb;
+  flex: none;
+}
+
+.suggestion-text {
+  margin-left: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.5;
+  color: #334155;
+}

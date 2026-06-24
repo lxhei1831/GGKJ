@@ -1,0 +1,57 @@
+<view class="page-shell">
+  <view class="page-content profile-page">
+    <view class="profile-card">
+      <view class="avatar">跨</view>
+      <view class="profile-main">
+        <text class="profile-name">跨境合规用户</text>
+        <text class="profile-desc">专业会员 · 有效期至 2026-12-31</text>
+      </view>
+      <view class="secondary-button renew-button" bindtap="openMember">续费</view>
+    </view>
+
+    <view class="section">
+      <view class="grid-two">
+        <view class="grid-item" wx:for="{{summary}}" wx:key="label">
+          <view class="card summary-card">
+            <text class="metric-value">{{item.value}}</text>
+            <text class="metric-label">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">我的功能</text>
+      <view class="card menu-card">
+        <view class="menu-row" wx:for="{{menus}}" wx:key="title" bindtap="openMenu" data-title="{{item.title}}">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-desc">{{item.desc}}</text>
+          </view>
+          <text class="menu-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">最近记录</text>
+      <view class="card">
+        <view class="record-row" wx:for="{{records}}" wx:key="name">
+          <view>
+            <text class="card-title">{{item.name}}</text>
+            <text class="card-desc">{{item.date}} · {{item.type}}</text>
+          </view>
+          <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="card contact-card">
+        <text class="card-title">联系客服</text>
+        <text class="card-desc">检测结果、TRO案件和律师服务都可从这里发起咨询。</text>
+        <view class="primary-button contact-button" bindtap="contactService">在线咨询</view>
+      </view>
+    </view>
+  </view>
+</view>
