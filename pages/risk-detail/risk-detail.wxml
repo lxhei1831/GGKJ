@@ -1,0 +1,70 @@
+<view class="page-shell">
+  <view class="page-content risk-detail-page">
+    <view class="hero-panel detail-hero">
+      <view class="hero-top">
+        <text class="eyebrow">{{detail.eyebrow}}</text>
+        <text class="hero-badge">{{detail.updatedAt}}</text>
+      </view>
+      <text class="hero-title">{{detail.title}}</text>
+      <text class="hero-desc">{{detail.summary}}</text>
+      <view class="source-note">{{detail.sourceNote}}</view>
+    </view>
+
+    <view class="section">
+      <view class="stat-strip">
+        <view class="stat-cell" wx:for="{{detail.stats}}" wx:for-item="stat" wx:key="label">
+          <text class="stat-value">{{stat.value}}</text>
+          <text class="stat-label">{{stat.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">处理原则</text>
+      <view class="card">
+        <view class="guidance-row" wx:for="{{detail.guidance}}" wx:for-item="guide" wx:key="*this">
+          <text class="guidance-index">{{index + 1}}</text>
+          <text class="guidance-text">{{guide}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">风险明细</text>
+      <view class="card detail-card" wx:for="{{detail.items}}" wx:for-item="entry" wx:key="name">
+        <view class="detail-card-head">
+          <view class="detail-title-block">
+            <text class="card-title">{{entry.name}}</text>
+            <text class="card-desc">{{entry.subtitle}}</text>
+          </view>
+          <text class="badge badge-{{entry.levelKey}}">{{entry.levelText}}</text>
+        </view>
+
+        <view class="rights-pill">{{entry.rights}}</view>
+        <text class="analysis-text">{{entry.analysis}}</text>
+
+        <view class="detail-block">
+          <text class="detail-block-title">常见违规点</text>
+          <view class="bullet-row" wx:for="{{entry.violations}}" wx:for-item="violation" wx:key="*this">
+            <text class="bullet-dot bullet-dot-high"></text>
+            <text class="bullet-text">{{violation}}</text>
+          </view>
+        </view>
+
+        <view class="detail-block">
+          <text class="detail-block-title">处理动作</text>
+          <view class="bullet-row" wx:for="{{entry.actions}}" wx:for-item="action" wx:key="*this">
+            <text class="bullet-dot"></text>
+            <text class="bullet-text">{{action}}</text>
+          </view>
+        </view>
+
+        <view class="source-row" bindtap="copySource" data-url="{{entry.sourceUrl}}">
+          <text class="source-label">公开来源</text>
+          <text class="source-name">{{entry.sourceName}}</text>
+          <text class="source-copy">复制</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

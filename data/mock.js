@@ -1,7 +1,11 @@
+const {
+  riskDetailMap,
+} = require('./riskDetails')
+
 const dashboardMetrics = [
-  { label: '高危品牌', value: '128', change: '今日新增 9 个', level: 'high' },
-  { label: '高危关键词', value: '2,460', change: '近 7 日更新', level: 'medium' },
-  { label: '近期TRO案件', value: '36', change: '重点关注 11 件', level: 'high' },
+  { label: '高危品牌', value: String(riskDetailMap.brands.items.length), change: '公开权利核验', level: 'high', detailType: 'brands' },
+  { label: '高危关键词', value: String(riskDetailMap.keywords.items.length), change: '平台规则命中', level: 'medium', detailType: 'keywords' },
+  { label: '近期TRO案件', value: String(riskDetailMap.tro.items.length), change: '公开案号追踪', level: 'high', detailType: 'tro' },
 ]
 
 const quickActions = [

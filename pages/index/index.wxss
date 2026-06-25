@@ -81,6 +81,23 @@ page {
     linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(255, 255, 255, 0) 58%, rgba(71, 85, 105, 0.035) 100%);
 }
 
+.metric-link:active {
+  transform: scale(0.98);
+}
+
+.metric-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12rpx;
+}
+
+.metric-arrow {
+  font-size: 38rpx;
+  line-height: 1;
+  color: #98a2b3;
+}
+
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;

@@ -24,4 +24,10 @@ Page({
       url: '/pages/tro/tro',
     })
   },
+  goRiskDetail(event) {
+    const type = event.currentTarget.dataset.type || 'brands'
+    wx.navigateTo({
+      url: `/pages/risk-detail/risk-detail?type=${type}`,
+    })
+  },
 })
