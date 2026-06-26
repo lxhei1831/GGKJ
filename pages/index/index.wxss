@@ -45,8 +45,10 @@ page {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 250, 255, 0.99) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.085) 0%, rgba(255, 255, 255, 0) 50%, rgba(14, 165, 233, 0.065) 100%);
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(14, 165, 233, 0.1) 100%);
 }
 
 .action-card:active {
@@ -77,8 +79,10 @@ page {
   min-height: 172rpx;
   margin-top: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 251, 255, 0.99) 100%),
-    linear-gradient(135deg, rgba(30, 64, 175, 0.075) 0%, rgba(255, 255, 255, 0) 58%, rgba(71, 85, 105, 0.05) 100%);
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(30, 64, 175, 0.12) 0%, rgba(255, 255, 255, 0) 58%, rgba(71, 85, 105, 0.08) 100%);
 }
 
 .metric-link:active {
@@ -124,8 +128,10 @@ page {
   align-items: center;
   justify-content: space-between;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 250, 252, 0.99) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.075) 0%, rgba(255, 255, 255, 0) 55%, rgba(15, 23, 42, 0.055) 100%);
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.11) 0%, rgba(255, 255, 255, 0) 55%, rgba(15, 23, 42, 0.08) 100%);
 }
 
 .compact-button {

@@ -1,12 +1,12 @@
-# Card Surface Design
+# Liquid Glass Card Surface Design
 
 ## Goal
 
-Unify all card-like surfaces in the mini program around the selected A direction: the current light card language with white surfaces, visible-but-restrained gradients, fine borders, and restrained shadows.
+Unify all card-like surfaces in the mini program around a source-inspired liquid glass treatment: translucent surfaces, diagonal highlights, refractive inner edges, backdrop blur, and stronger depth.
 
 ## Decision
 
-Do not import or copy the Gitee liquid-glass CSS. The referenced repository is GPL-2.0, and the selected A direction is visually the existing light card style rather than the stronger liquid-glass treatment.
+Do not import or copy the Gitee liquid-glass CSS verbatim. The referenced repository is GPL-2.0, so the project uses a self-authored WXSS implementation that recreates the visual ingredients: translucent base layers, multi-layer highlights, double borders, inset edge shadows, and backdrop blur.
 
 ## Scope
 
@@ -18,12 +18,13 @@ Update card-like WXSS selectors across the app:
 
 ## Visual Rules
 
-- Background uses a near-white vertical gradient plus a visible blue/slate diagonal tint.
-- Border uses `#e5eaf3` or the active-state color when selected.
-- Shadow uses a soft slate shadow, never `box-shadow: none` on card-like surfaces.
+- Background uses a 45-degree white highlight, a radial top-left sheen, a translucent white base layer, and a blue/slate diagonal tint.
+- Border uses a `double` refractive edge, with active-state cards allowed to strengthen the blue edge.
+- Shadow uses multiple inset highlights plus outer depth, never `box-shadow: none` on card-like surfaces.
+- Backdrop blur uses both standard and WebKit-prefixed properties for broader mini program WebView coverage.
 - Radius stays at `16rpx` for app cards to match the existing visual system.
 - Active mode cards can keep a stronger blue border and blue-tinted shadow.
 
 ## Testing
 
-Add a Node-based stylesheet test that parses app and page WXSS text and verifies that core card-like selectors include the approved surface traits. Keep existing data and route tests passing.
+Add a Node-based stylesheet test that parses app and page WXSS text and verifies that core card-like selectors include liquid-glass traits. Keep existing data and route tests passing.
