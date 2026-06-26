@@ -9,7 +9,7 @@ page {
 .detect-hero {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 250, 255, 0.99) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.07) 0%, rgba(255, 255, 255, 0) 50%, rgba(14, 165, 233, 0.05) 100%);
+    linear-gradient(135deg, rgba(37, 99, 235, 0.095) 0%, rgba(255, 255, 255, 0) 50%, rgba(14, 165, 233, 0.07) 100%);
 }
 
 .mode-board {
@@ -26,8 +26,9 @@ page {
   border-radius: 16rpx;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(249, 251, 254, 0.99) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(255, 255, 255, 0) 60%, rgba(100, 116, 139, 0.035) 100%);
-  border: 1rpx solid #dbe3ef;
+    linear-gradient(135deg, rgba(37, 99, 235, 0.065) 0%, rgba(255, 255, 255, 0) 60%, rgba(100, 116, 139, 0.05) 100%);
+  border: 1rpx solid #e5eaf3;
+  box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.035);
   box-sizing: border-box;
 }
 
@@ -35,7 +36,7 @@ page {
   border-color: #2563eb;
   background:
     linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.09) 0%, rgba(255, 255, 255, 0) 56%, rgba(14, 165, 233, 0.07) 100%);
+    linear-gradient(135deg, rgba(37, 99, 235, 0.11) 0%, rgba(255, 255, 255, 0) 56%, rgba(14, 165, 233, 0.085) 100%);
   box-shadow: 0 8rpx 22rpx rgba(37, 99, 235, 0.08);
 }
 
@@ -96,10 +97,11 @@ page {
   margin-top: 22rpx;
   padding: 28rpx;
   border-radius: 16rpx;
-  border: 1rpx dashed #94a3b8;
+  border: 1rpx dashed #c4cfdd;
   background:
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(255, 255, 255, 0) 62%, rgba(14, 165, 233, 0.04) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 250, 252, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.065) 0%, rgba(255, 255, 255, 0) 62%, rgba(14, 165, 233, 0.06) 100%);
+  box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.035);
 }
 
 .upload-title {
@@ -126,9 +128,10 @@ page {
   padding: 22rpx;
   border-radius: 16rpx;
   background:
-    linear-gradient(180deg, #f8fbff 0%, #edf5ff 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.055) 0%, rgba(255, 255, 255, 0) 58%, rgba(14, 165, 233, 0.05) 100%);
-  border: 1rpx solid #dbeafe;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 251, 255, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.075) 0%, rgba(255, 255, 255, 0) 58%, rgba(14, 165, 233, 0.065) 100%);
+  border: 1rpx solid #e5eaf3;
+  box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.035);
 }
 
 .model-note-title {
@@ -183,9 +186,10 @@ page {
   padding: 22rpx;
   border-radius: 16rpx;
   background:
-    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.035) 0%, rgba(255, 255, 255, 0) 62%, rgba(100, 116, 139, 0.035) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 250, 252, 0.99) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, rgba(255, 255, 255, 0) 62%, rgba(100, 116, 139, 0.05) 100%);
   border: 1rpx solid #e5eaf3;
+  box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.035);
 }
 
 .risk-block-title {
