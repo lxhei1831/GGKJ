@@ -75,48 +75,6 @@ page {
   background: #475467;
 }
 
-.metric-card {
-  min-height: 172rpx;
-  margin-top: 0;
-  background:
-    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
-    linear-gradient(135deg, rgba(30, 64, 175, 0.12) 0%, rgba(255, 255, 255, 0) 58%, rgba(71, 85, 105, 0.08) 100%);
-}
-
-.metric-link:active {
-  transform: scale(0.98);
-}
-
-.metric-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12rpx;
-}
-
-.metric-arrow {
-  font-size: 38rpx;
-  line-height: 1;
-  color: #98a2b3;
-}
-
-.tag-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 18rpx;
-}
-
-.risk-tag {
-  margin: 0 12rpx 12rpx 0;
-  padding: 12rpx 16rpx;
-  border-radius: 999rpx;
-  font-size: 23rpx;
-  color: #334155;
-  background: #eef2f7;
-}
-
 .report-row {
   display: flex;
   align-items: center;

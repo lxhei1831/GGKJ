@@ -1,11 +1,7 @@
-const {
-  riskDetailMap,
-} = require('./riskDetails')
-
 const dashboardMetrics = [
-  { label: '高危品牌', value: String(riskDetailMap.brands.items.length), change: '公开权利核验', level: 'high', detailType: 'brands' },
-  { label: '高危关键词', value: String(riskDetailMap.keywords.items.length), change: '平台规则命中', level: 'medium', detailType: 'keywords' },
-  { label: '近期TRO案件', value: String(riskDetailMap.tro.items.length), change: '公开案号追踪', level: 'high', detailType: 'tro' },
+  { label: '高危品牌', value: '128', change: '今日新增 9 个', level: 'high' },
+  { label: '高危关键词', value: '2,460', change: '近 7 日更新', level: 'medium' },
+  { label: '近期TRO案件', value: '36', change: '重点关注 11 件', level: 'high' },
 ]
 
 const quickActions = [
@@ -13,21 +9,6 @@ const quickActions = [
   { title: '图片快速检测', desc: 'Logo、IP角色、图案和外观元素识别', mode: 'image', tone: 'blue' },
   { title: '关键词快速检测', desc: '商标词、品牌词、IP词和TRO词筛查', mode: 'keyword', tone: 'amber' },
   { title: '店铺批量检测', desc: 'Excel批量导入，输出分级处理建议', mode: 'batch', tone: 'slate' },
-]
-
-const alertGroups = [
-  {
-    title: '今日新增TRO品牌',
-    items: ['Stanley', 'PopSockets', 'Harley-Davidson', 'Smiley'],
-  },
-  {
-    title: '高频侵权关键词',
-    items: ['compatible with Lego', 'Disney style', 'Taylor Swift merch', 'NFL logo'],
-  },
-  {
-    title: '高危产品类目',
-    items: ['POD服饰', '手机配件', '玩具积木', '节日装饰'],
-  },
 ]
 
 const recentReports = [
@@ -106,7 +87,6 @@ const profileMenus = [
 module.exports = {
   dashboardMetrics,
   quickActions,
-  alertGroups,
   recentReports,
   detectionModes,
   platforms,

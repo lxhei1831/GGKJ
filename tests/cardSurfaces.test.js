@@ -44,12 +44,10 @@ assertLiquidGlassSurface('app.wxss', '.hero-panel')
 assertLiquidGlassSurface('app.wxss', '.input-card')
 assertLiquidGlassSurface('pages/profile/profile.wxss', '.profile-card')
 assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.lawyer-hero')
-assertLiquidGlassSurface('pages/risk-detail/risk-detail.wxss', '.stat-strip')
 assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.contact-card')
 
 ;[
   ['pages/index/index.wxss', '.action-card'],
-  ['pages/index/index.wxss', '.metric-card'],
   ['pages/index/index.wxss', '.emergency-card'],
   ['pages/detect/detect.wxss', '.detect-hero'],
   ['pages/detect/detect.wxss', '.mode-card'],
@@ -65,5 +63,4 @@ assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.contact-card')
   ['pages/tools/tools.wxss', '.assistant-card'],
   ['pages/profile/profile.wxss', '.summary-card'],
   ['pages/profile/profile.wxss', '.contact-card'],
-  ['pages/risk-detail/risk-detail.wxss', '.detail-hero'],
 ].forEach(([file, selector]) => assertLiquidGlassBackground(file, selector))
