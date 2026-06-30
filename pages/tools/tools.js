@@ -11,7 +11,6 @@ Page({
       { platform: 'TikTok Shop', desc: '内容版权、商标投诉和店铺处罚申诉' },
       { platform: 'eBay', desc: 'VeRO投诉、反通知和授权证明' },
     ],
-    services: ['商标注册', '版权登记', '外观专利申请', '品牌备案', '授权链路整理', '侵权证据保全'],
   },
   openTool(event) {
     wx.showToast({

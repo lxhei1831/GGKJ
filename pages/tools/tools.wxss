@@ -14,14 +14,28 @@ page {
     linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 55%, rgba(14, 165, 233, 0.1) 100%);
 }
 
+.tools-grid {
+  margin-top: 10rpx;
+}
+
+.tools-grid .grid-item {
+  width: 50%;
+  padding: 8rpx;
+}
+
 .tool-card {
-  min-height: 214rpx;
+  min-height: 190rpx;
   margin-top: 0;
+  padding: 22rpx;
   background:
     linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
     radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
     linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(255, 255, 255, 0) 60%, rgba(100, 116, 139, 0.08) 100%);
+}
+
+.tool-card:active {
+  transform: scale(0.98);
 }
 
 .tool-icon {
@@ -67,18 +81,4 @@ page {
 
 .assistant-button {
   margin-top: 22rpx;
-}
-
-.service-card {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.service-pill {
-  margin: 0 12rpx 12rpx 0;
-  padding: 14rpx 18rpx;
-  border-radius: 999rpx;
-  font-size: 24rpx;
-  color: #334155;
-  background: #eef2f7;
 }

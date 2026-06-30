@@ -122,14 +122,10 @@ const toolCards = [
   { title: '被投诉申诉', desc: '生成平台申诉方案与材料清单' },
   { title: '平台投诉模板', desc: 'Amazon、Temu、TikTok Shop、eBay中英文模板' },
   { title: '盗图检测', desc: '原创图片盗用检测与投诉材料生成' },
-  { title: '跟卖监控', desc: '监控价格、图片、标题复制情况' },
   { title: '英文申诉信助手', desc: '平台邮件、律师函回复和证据说明' },
-  { title: '知识产权服务', desc: '商标注册、版权登记、外观专利和品牌备案' },
 ]
 
 const profileMenus = [
-  { title: '我的检测记录', desc: '查看历史检测、风险等级和报告' },
-  { title: '我的风险报告', desc: 'PDF/Excel报告查看、分享和下载' },
   { title: '我的TRO案件', desc: '案件状态、下一步动作和截止时间' },
   { title: '我的订单', desc: '单次检测、会员订阅和律师服务订单' },
   { title: '消息通知', desc: '检测结果、TRO预警和投诉进度提醒' },

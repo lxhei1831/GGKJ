@@ -2,13 +2,13 @@
   <view class="page-content tools-page">
     <view class="hero-panel tools-hero">
       <text class="eyebrow">申诉与维权闭环</text>
-      <text class="hero-title">被投诉、盗图、跟卖都能快速建档</text>
-      <text class="hero-desc">围绕平台申诉、投诉材料、英文信函和知识产权服务做工具化入口。</text>
+      <text class="hero-title">被投诉、盗图和申诉材料快速建档</text>
+      <text class="hero-desc">围绕平台申诉、投诉材料和英文信函做工具化入口。</text>
     </view>
 
     <view class="section">
       <text class="section-title">工具入口</text>
-      <view class="grid-two">
+      <view class="grid-two tools-grid">
         <view class="grid-item" wx:for="{{tools}}" wx:key="title">
           <view class="card tool-card" bindtap="openTool" data-title="{{item.title}}">
             <view class="tool-icon">{{index + 1}}</view>
@@ -39,13 +39,6 @@
           <text class="card-desc">后续可接入大模型，根据平台通知、证据材料和目标语气生成英文申诉邮件。</text>
         </view>
         <view class="primary-button assistant-button" bindtap="openAppealAssistant">开始撰写</view>
-      </view>
-    </view>
-
-    <view class="section">
-      <text class="section-title">知识产权服务</text>
-      <view class="card service-card">
-        <view class="service-pill" wx:for="{{services}}" wx:key="*this">{{item}}</view>
       </view>
     </view>
   </view>
