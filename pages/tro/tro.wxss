@@ -18,9 +18,8 @@ page {
   margin-top: 26rpx;
 }
 
-.module-card {
-  min-height: 188rpx;
-  margin-top: 0;
+.case-result-card {
+  margin-top: 24rpx;
 }
 
 .lawyer-service-card {
@@ -75,8 +74,7 @@ page {
   background: #e8f0ff;
 }
 
-.case-action,
-.check-row {
+.case-action {
   display: flex;
   align-items: flex-start;
   margin-top: 18rpx;
@@ -91,32 +89,9 @@ page {
   flex: none;
 }
 
-.case-action-text,
-.check-text {
+.case-action-text {
   margin-left: 16rpx;
   font-size: 25rpx;
   line-height: 1.5;
   color: #344054;
-}
-
-.check-box {
-  width: 34rpx;
-  height: 34rpx;
-  margin-top: 4rpx;
-  border-radius: 8rpx;
-  border: 2rpx solid #99a8bd;
-  background: #ffffff;
-  flex: none;
-}
-
-.brand-library {
-  background:
-    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(255, 255, 255, 0) 62%, rgba(100, 116, 139, 0.08) 100%);
-}
-
-.library-button {
-  margin-top: 22rpx;
 }

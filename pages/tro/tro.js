@@ -1,7 +1,5 @@
 const {
   platforms,
-  troModules,
-  troChecklist,
 } = require('../../data/mock')
 
 const defaultCaseForm = {
@@ -15,8 +13,6 @@ Page({
     platforms,
     platformIndex: 0,
     selectedPlatform: platforms[0],
-    modules: troModules,
-    checklist: troChecklist,
     caseForm: Object.assign({}, defaultCaseForm),
     caseResult: null,
   },
@@ -70,12 +66,6 @@ Page({
           '需要和解时，先评估销售额、库存、初犯情况和证据强弱。',
         ],
       },
-    })
-  },
-  openLibrary() {
-    wx.showToast({
-      title: '品牌库接口待接入',
-      icon: 'none',
     })
   },
   openLawyerProfile() {
