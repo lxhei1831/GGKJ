@@ -59,7 +59,6 @@ assertLiquidGlassBackground('pages/case-detail/case-detail.wxss', '.case-detail-
   ['pages/detect/detect.wxss', '.risk-block'],
   ['pages/tro/tro.wxss', '.tro-hero'],
   ['pages/tro/tro.wxss', '.lawyer-service-card'],
-  ['pages/tro/tro.wxss', '.brand-library'],
   ['pages/tools/tools.wxss', '.tools-hero'],
   ['pages/tools/tools.wxss', '.tool-card'],
   ['pages/tools/tools.wxss', '.assistant-card'],
