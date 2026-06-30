@@ -1,6 +1,9 @@
 const {
   profileMenus,
 } = require('../../data/mock')
+const {
+  getRecentReports,
+} = require('../../services/reportStore')
 
 Page({
   data: {
@@ -11,11 +14,12 @@ Page({
       { label: '风险报告', value: '12' },
       { label: 'TRO案件', value: '2' },
     ],
-    records: [
-      { name: 'TikTok Shop关键词检测', date: '06-11 10:30', type: '关键词', level: 'medium', levelText: '中风险' },
-      { name: 'Temu批量产品复核', date: '06-10 16:15', type: '批量', level: 'high', levelText: '高风险' },
-      { name: 'Amazon图片元素检测', date: '06-09 11:02', type: '图片', level: 'low', levelText: '低风险' },
-    ],
+    records: [],
+  },
+  onShow() {
+    this.setData({
+      records: getRecentReports(),
+    })
   },
   openMenu(event) {
     wx.showToast({

@@ -271,3 +271,24 @@ page {
   line-height: 1.5;
   color: #334155;
 }
+
+.report-history-card {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.report-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.report-history-row:last-child {
+  border-bottom: 0;
+}
+
+.report-empty {
+  padding: 24rpx 0;
+}

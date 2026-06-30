@@ -96,6 +96,10 @@ page {
   border-bottom: 0;
 }
 
+.record-empty {
+  padding: 24rpx 0;
+}
+
 .menu-arrow {
   margin-left: 20rpx;
   font-size: 42rpx;

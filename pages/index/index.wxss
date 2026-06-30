@@ -97,13 +97,14 @@ page {
 
 .case-flow {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin: 18rpx -6rpx 0;
 }
 
 .case-step {
-  width: 33.333%;
-  min-height: 72rpx;
+  flex: 1;
+  min-width: 0;
+  min-height: 40rpx;
   padding: 0 6rpx;
   box-sizing: border-box;
   display: flex;
@@ -123,4 +124,5 @@ page {
   font-size: 22rpx;
   line-height: 1.35;
   color: #334155;
+  white-space: nowrap;
 }

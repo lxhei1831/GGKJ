@@ -155,5 +155,29 @@
         </view>
       </view>
     </view>
+
+    <view class="section">
+      <view class="section-head">
+        <view>
+          <text class="section-title">最近检测报告</text>
+          <text class="section-subtitle">风险分、市场和生成时间集中查看。</text>
+        </view>
+      </view>
+      <view class="card report-history-card">
+        <block wx:if="{{recentReports.length}}">
+          <view class="report-history-row" wx:for="{{recentReports}}" wx:key="id">
+            <view>
+              <text class="card-title">{{item.name}}</text>
+              <text class="card-desc">{{item.date}} · {{item.jurisdiction}} · 风险分 {{item.score}}</text>
+            </view>
+            <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
+          </view>
+        </block>
+        <view class="report-empty" wx:else>
+          <text class="card-title">暂无检测报告</text>
+          <text class="card-desc">完成一次检测后，会在这里显示最近报告。</text>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

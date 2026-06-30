@@ -34,14 +34,20 @@
     </view>
 
     <view class="section">
-      <text class="section-title">最近记录</text>
+      <text class="section-title">最近检测报告</text>
       <view class="card">
-        <view class="record-row" wx:for="{{records}}" wx:key="name">
-          <view>
-            <text class="card-title">{{item.name}}</text>
-            <text class="card-desc">{{item.date}} · {{item.type}}</text>
+        <block wx:if="{{records.length}}">
+          <view class="record-row" wx:for="{{records}}" wx:key="id">
+            <view>
+              <text class="card-title">{{item.name}}</text>
+              <text class="card-desc">{{item.date}} · {{item.jurisdiction}} · 风险分 {{item.score}}</text>
+            </view>
+            <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
           </view>
-          <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
+        </block>
+        <view class="record-empty" wx:else>
+          <text class="card-title">暂无检测记录</text>
+          <text class="card-desc">完成一次检测后会在这里展示。</text>
         </view>
       </view>
     </view>

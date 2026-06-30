@@ -7,6 +7,10 @@ const {
   detectRisk,
   MODEL_INTEGRATION_STATUS,
 } = require('../../services/riskEngine')
+const {
+  getRecentReports,
+  saveDetectionReport,
+} = require('../../services/reportStore')
 
 const defaultForm = {
   productUrl: '',
@@ -32,6 +36,7 @@ Page({
     activeModeDesc: detectionModes[0].desc,
     form: Object.assign({}, defaultForm),
     result: null,
+    recentReports: [],
     loading: false,
     modelStatus: MODEL_INTEGRATION_STATUS,
   },
@@ -41,6 +46,12 @@ Page({
       wx.removeStorageSync('pendingDetectMode')
       this.applyMode(pendingMode)
     }
+    this.loadRecentReports()
+  },
+  loadRecentReports() {
+    this.setData({
+      recentReports: getRecentReports(),
+    })
   },
   selectMode(event) {
     this.applyMode(event.currentTarget.dataset.mode)
@@ -140,8 +151,12 @@ Page({
 
     detectRisk(payload)
       .then((result) => {
+        saveDetectionReport(payload, result, {
+          modeLabel: this.data.activeModeLabel,
+        })
         this.setData({
           result,
+          recentReports: getRecentReports(),
           loading: false,
         })
       })
