@@ -60,21 +60,6 @@ const aiAgents = [
   '跨境合规问答助手',
 ]
 
-const troModules = [
-  { title: 'TRO案件自查', desc: '平台、案件号、原告品牌、冻结金额综合判断' },
-  { title: '案件号查询', desc: '展示案件详情、冻结金额、风险等级和建议' },
-  { title: '冻结金额评估', desc: '根据销售额、产品数量、初犯情况预估和解区间' },
-  { title: '律师对接', desc: '材料审核、预约律师、跟踪案件进度' },
-]
-
-const troChecklist = [
-  '法院文件或平台通知',
-  'PayPal/Stripe冻结截图',
-  '涉案产品销售记录',
-  '店铺主体与联系方式',
-  '已下架或整改证明',
-]
-
 const toolCards = [
   { title: '被投诉申诉', desc: '生成平台申诉方案与材料清单' },
   { title: '平台投诉模板', desc: 'Amazon、Temu、TikTok Shop、eBay中英文模板' },
@@ -101,8 +86,6 @@ module.exports = {
   platforms,
   countryRegions,
   aiAgents,
-  troModules,
-  troChecklist,
   toolCards,
   profileMenus,
 }
