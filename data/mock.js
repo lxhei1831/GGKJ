@@ -11,10 +11,19 @@ const quickActions = [
   { title: '店铺批量检测', desc: 'Excel批量导入，输出分级处理建议', mode: 'batch', tone: 'slate' },
 ]
 
-const recentReports = [
-  { name: 'Temu手机壳批量检测', date: '06-11 09:20', score: 82, level: '高风险', levelKey: 'high' },
-  { name: 'Amazon户外杯Listing', date: '06-10 18:42', score: 61, level: '中风险', levelKey: 'medium' },
-  { name: 'TikTok Shop饰品关键词', date: '06-09 14:10', score: 24, level: '低风险', levelKey: 'low' },
+const successCases = [
+  {
+    title: '家居卖家上架前拦截外观专利风险',
+    tag: '美国市场 / 家居用品',
+    result: '小程序初筛提示图片相似风险，律师复核后建议替换主图与卖点描述，卖家调整后再上架。',
+    steps: ['AI初筛定位高风险图片', '律师复核确认规避路径', '调整素材后继续销售'],
+  },
+  {
+    title: '饰品卖家关键词复核后降低TRO命中风险',
+    tag: '多平台 / 饰品Listing',
+    result: '批量检测发现疑似品牌词和高危TRO词，律师服务协助梳理替换词，减少后续投诉隐患。',
+    steps: ['批量检测筛出敏感词', '律师标注可替换表达', '优化Listing后发布'],
+  },
 ]
 
 const detectionModes = [
@@ -87,7 +96,7 @@ const profileMenus = [
 module.exports = {
   dashboardMetrics,
   quickActions,
-  recentReports,
+  successCases,
   detectionModes,
   platforms,
   countryRegions,

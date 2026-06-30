@@ -36,29 +36,26 @@
     <view class="section">
       <view class="section-head">
         <view>
-          <text class="section-title">最近检测报告</text>
-          <text class="section-subtitle">报告下载和分享入口后续接入文件服务。</text>
+          <text class="section-title">成功案例</text>
+          <text class="section-subtitle">匿名脱敏展示小程序检测与律师服务协同处理的真实场景。</text>
         </view>
       </view>
-      <view class="card report-list">
-        <view class="list-row report-row" wx:for="{{recentReports}}" wx:key="name">
-          <view>
-            <text class="card-title">{{item.name}}</text>
-            <text class="card-desc">{{item.date}} · 风险分 {{item.score}}</text>
+      <view class="case-list">
+        <view class="card case-card" wx:for="{{successCases}}" wx:key="title">
+          <view class="case-head">
+            <text class="badge badge-info">{{item.tag}}</text>
           </view>
-          <text class="badge badge-{{item.levelKey}}">{{item.level}}</text>
+          <text class="card-title">{{item.title}}</text>
+          <text class="card-desc">{{item.result}}</text>
+          <view class="case-flow">
+            <view class="case-step" wx:for="{{item.steps}}" wx:for-item="step" wx:key="*this">
+              <text class="case-step-dot"></text>
+              <text class="case-step-text">{{step}}</text>
+            </view>
+          </view>
         </view>
       </view>
     </view>
 
-    <view class="section">
-      <view class="card emergency-card">
-        <view>
-          <text class="card-title">紧急TRO案件咨询</text>
-          <text class="card-desc">收到法院文件、平台冻结或律所邮件时，优先整理材料并进入应急流程。</text>
-        </view>
-        <view class="secondary-button compact-button" bindtap="goTro">进入应急</view>
-      </view>
-    </view>
   </view>
 </view>

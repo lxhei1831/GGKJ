@@ -75,27 +75,52 @@ page {
   background: #475467;
 }
 
-.report-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.case-list {
+  margin-top: 2rpx;
 }
 
-.emergency-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.case-card {
+  margin-top: 18rpx;
+  overflow: hidden;
   background:
     linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
     radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.11) 0%, rgba(255, 255, 255, 0) 55%, rgba(15, 23, 42, 0.08) 100%);
+    linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(255, 255, 255, 0) 50%, rgba(16, 185, 129, 0.1) 100%);
 }
 
-.compact-button {
-  width: 176rpx;
-  height: 72rpx;
-  margin-left: 24rpx;
+.case-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.case-flow {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 18rpx -6rpx 0;
+}
+
+.case-step {
+  width: 33.333%;
+  min-height: 72rpx;
+  padding: 0 6rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+}
+
+.case-step-dot {
+  width: 12rpx;
+  height: 12rpx;
+  margin: 12rpx 10rpx 0 0;
+  border-radius: 999rpx;
   flex: none;
-  font-size: 25rpx;
+  background: #10b981;
+}
+
+.case-step-text {
+  font-size: 22rpx;
+  line-height: 1.35;
+  color: #334155;
 }

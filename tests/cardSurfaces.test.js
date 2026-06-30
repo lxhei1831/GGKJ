@@ -48,7 +48,7 @@ assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.contact-card')
 
 ;[
   ['pages/index/index.wxss', '.action-card'],
-  ['pages/index/index.wxss', '.emergency-card'],
+  ['pages/index/index.wxss', '.case-card'],
   ['pages/detect/detect.wxss', '.detect-hero'],
   ['pages/detect/detect.wxss', '.mode-card'],
   ['pages/detect/detect.wxss', '.mode-card-active'],
