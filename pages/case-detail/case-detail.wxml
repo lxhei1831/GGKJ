@@ -1,0 +1,90 @@
+<view class="page-shell">
+  <view class="page-content case-detail-page" wx:if="{{caseDetail}}">
+    <view class="hero-panel case-detail-hero">
+      <text class="eyebrow">成功案例详情</text>
+      <text class="hero-title">{{caseDetail.title}}</text>
+      <text class="hero-desc">{{caseDetail.result}}</text>
+      <view class="case-detail-tags">
+        <text class="badge badge-info">{{caseDetail.tag}}</text>
+        <text class="badge badge-medium">{{caseDetail.overview.riskType}}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">案例概况</text>
+      <view class="card detail-card">
+        <view class="detail-grid">
+          <view class="detail-item">
+            <text class="metric-label">卖家类型</text>
+            <text class="detail-value">{{caseDetail.overview.seller}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="metric-label">业务场景</text>
+            <text class="detail-value">{{caseDetail.overview.scene}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="metric-label">风险类型</text>
+            <text class="detail-value">{{caseDetail.overview.riskType}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="metric-label">提交材料</text>
+            <text class="detail-value">{{caseDetail.overview.material}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">检测发现</text>
+      <view class="card detail-card">
+        <text class="card-title">{{caseDetail.finding.title}}</text>
+        <text class="card-desc">{{caseDetail.finding.detail}}</text>
+        <view class="chip-row">
+          <text class="detail-chip" wx:for="{{caseDetail.finding.evidence}}" wx:key="*this">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">律师复核</text>
+      <view class="card detail-card">
+        <text class="card-title">{{caseDetail.lawyerReview.title}}</text>
+        <text class="card-desc">{{caseDetail.lawyerReview.detail}}</text>
+        <view class="action-row" wx:for="{{caseDetail.lawyerReview.actions}}" wx:key="*this">
+          <text class="suggestion-index">{{index + 1}}</text>
+          <text class="action-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">处理流程</text>
+      <view class="card timeline-card">
+        <view class="timeline-row" wx:for="{{caseDetail.process}}" wx:key="stage">
+          <view class="timeline-node">{{index + 1}}</view>
+          <view class="timeline-main">
+            <text class="card-title">{{item.stage}}</text>
+            <text class="card-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">处理结果</text>
+      <view class="card detail-card">
+        <text class="card-desc">{{caseDetail.outcome}}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">专业提示</text>
+      <view class="card detail-card">
+        <view class="tip-row" wx:for="{{caseDetail.professionalTips}}" wx:key="*this">
+          <text class="tip-mark"></text>
+          <text class="tip-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

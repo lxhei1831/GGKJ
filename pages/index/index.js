@@ -17,4 +17,10 @@ Page({
       url: '/pages/detect/detect',
     })
   },
+  openCase(event) {
+    const id = event.currentTarget.dataset.id
+    wx.navigateTo({
+      url: `/pages/case-detail/case-detail?id=${id}`,
+    })
+  },
 })

@@ -45,10 +45,12 @@ assertLiquidGlassSurface('app.wxss', '.input-card')
 assertLiquidGlassSurface('pages/profile/profile.wxss', '.profile-card')
 assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.lawyer-hero')
 assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.contact-card')
+assertLiquidGlassBackground('pages/case-detail/case-detail.wxss', '.case-detail-hero')
 
 ;[
   ['pages/index/index.wxss', '.action-card'],
   ['pages/index/index.wxss', '.case-card'],
+  ['pages/case-detail/case-detail.wxss', '.case-detail-hero'],
   ['pages/detect/detect.wxss', '.detect-hero'],
   ['pages/detect/detect.wxss', '.mode-card'],
   ['pages/detect/detect.wxss', '.mode-card-active'],

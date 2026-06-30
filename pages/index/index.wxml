@@ -41,7 +41,7 @@
         </view>
       </view>
       <view class="case-list">
-        <view class="card case-card" wx:for="{{successCases}}" wx:key="title">
+        <view class="card case-card" wx:for="{{successCases}}" wx:key="id" bindtap="openCase" data-id="{{item.id}}">
           <view class="case-head">
             <text class="badge badge-info">{{item.tag}}</text>
           </view>
@@ -52,6 +52,10 @@
               <text class="case-step-dot"></text>
               <text class="case-step-text">{{step}}</text>
             </view>
+          </view>
+          <view class="case-more">
+            <text>查看详情</text>
+            <text class="case-more-arrow">›</text>
           </view>
         </view>
       </view>

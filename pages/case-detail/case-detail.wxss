@@ -1,0 +1,122 @@
+page {
+  min-height: 100vh;
+}
+
+.case-detail-page {
+  padding-bottom: 72rpx;
+}
+
+.case-detail-hero {
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 48%, rgba(16, 185, 129, 0.1) 100%);
+}
+
+.case-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 20rpx -6rpx 0;
+}
+
+.case-detail-tags .badge {
+  margin: 6rpx;
+}
+
+.detail-card {
+  overflow: hidden;
+}
+
+.detail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -10rpx;
+}
+
+.detail-item {
+  width: 50%;
+  padding: 10rpx;
+  box-sizing: border-box;
+}
+
+.detail-value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 25rpx;
+  line-height: 1.4;
+  color: #111827;
+  font-weight: 750;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 18rpx -6rpx 0;
+}
+
+.detail-chip {
+  margin: 6rpx;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  color: #1d4ed8;
+  background: #e8f0ff;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.action-row,
+.tip-row {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 18rpx;
+}
+
+.action-text,
+.tip-text {
+  margin-left: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.timeline-card {
+  padding-top: 4rpx;
+  padding-bottom: 4rpx;
+}
+
+.timeline-row {
+  display: flex;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.timeline-row:last-child {
+  border-bottom: 0;
+}
+
+.timeline-node {
+  width: 42rpx;
+  height: 42rpx;
+  line-height: 42rpx;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 22rpx;
+  font-weight: 850;
+  color: #ffffff;
+  background: #2563eb;
+  flex: none;
+}
+
+.timeline-main {
+  margin-left: 18rpx;
+}
+
+.tip-mark {
+  width: 14rpx;
+  height: 14rpx;
+  margin-top: 12rpx;
+  border-radius: 999rpx;
+  flex: none;
+  background: #10b981;
+}
