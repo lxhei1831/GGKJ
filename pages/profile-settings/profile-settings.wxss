@@ -1,0 +1,51 @@
+page {
+  min-height: 100vh;
+}
+
+.profile-feature-page {
+  padding-bottom: 72rpx;
+}
+
+.feature-hero-settings {
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 52%, rgba(71, 85, 105, 0.1) 100%);
+}
+
+.settings-card {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.settings-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-label {
+  font-size: 26rpx;
+  color: #111827;
+  font-weight: 750;
+}
+
+.settings-value {
+  margin-left: 20rpx;
+  font-size: 24rpx;
+  color: #64748b;
+  text-align: right;
+}
+
+.menu-arrow {
+  margin-left: 20rpx;
+  font-size: 42rpx;
+  color: #98a2b3;
+}

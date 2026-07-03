@@ -1,0 +1,15 @@
+const assert = require('assert')
+const fs = require('fs')
+const path = require('path')
+
+const root = path.join(__dirname, '..')
+const profileWxml = fs.readFileSync(path.join(root, 'pages/profile/profile.wxml'), 'utf8')
+const profileJs = fs.readFileSync(path.join(root, 'pages/profile/profile.js'), 'utf8')
+
+assert(profileWxml.includes('open-type="contact"'), 'profile page should use the native customer service contact button')
+assert(profileWxml.includes('session-from="profile"'), 'profile contact button should identify the profile entry')
+assert(profileWxml.includes('show-message-card="true"'), 'profile contact button should enable sending a mini program card')
+assert(profileWxml.includes('send-message-title="跨境侵权风险咨询"'), 'profile contact button should include a useful message card title')
+assert(profileWxml.includes('send-message-path="/pages/profile/profile"'), 'profile contact button should send users back to profile page')
+assert(!profileWxml.includes('bindtap="contactService"'), 'profile contact entry should not use the old placeholder tap handler')
+assert(!profileJs.includes('contactService()'), 'profile page should not keep the old customer service placeholder method')

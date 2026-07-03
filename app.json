@@ -6,7 +6,11 @@
     "pages/tro/tro",
     "pages/lawyer/lawyer",
     "pages/tools/tools",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/profile-tro/profile-tro",
+    "pages/profile-orders/profile-orders",
+    "pages/profile-messages/profile-messages",
+    "pages/profile-settings/profile-settings"
   ],
   "window": {
     "navigationBarTextStyle": "black",

@@ -22,20 +22,23 @@ Page({
     })
   },
   openMenu(event) {
-    wx.showToast({
-      title: `${event.currentTarget.dataset.title}待接入`,
-      icon: 'none',
+    const path = event.currentTarget.dataset.path
+
+    if (!path) {
+      wx.showToast({
+        title: '页面准备中',
+        icon: 'none',
+      })
+      return
+    }
+
+    wx.navigateTo({
+      url: path,
     })
   },
   openMember() {
     wx.showToast({
       title: '会员支付待接入',
-      icon: 'none',
-    })
-  },
-  contactService() {
-    wx.showToast({
-      title: '客服接口待接入',
       icon: 'none',
     })
   },

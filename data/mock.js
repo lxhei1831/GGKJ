@@ -126,10 +126,10 @@ const toolCards = [
 ]
 
 const profileMenus = [
-  { title: '我的TRO案件', desc: '案件状态、下一步动作和截止时间' },
-  { title: '我的订单', desc: '单次检测、会员订阅和律师服务订单' },
-  { title: '消息通知', desc: '检测结果、TRO预警和投诉进度提醒' },
-  { title: '账号设置', desc: '手机号、邮箱、密码与安全设置' },
+  { key: 'tro', mark: '案', title: '我的TRO案件', desc: '案件状态、下一步动作和截止时间', status: '待检测后生成', statusKey: 'medium', path: '/pages/profile-tro/profile-tro' },
+  { key: 'orders', mark: '单', title: '我的订单', desc: '单次检测、会员订阅和律师服务订单', status: '暂无订单', statusKey: 'low', path: '/pages/profile-orders/profile-orders' },
+  { key: 'messages', mark: '信', title: '消息通知', desc: '检测结果、TRO预警和投诉进度提醒', status: '暂无未读', statusKey: 'info', path: '/pages/profile-messages/profile-messages' },
+  { key: 'settings', mark: '设', title: '账号设置', desc: '手机号、邮箱、通知偏好与安全设置', status: '可查看', statusKey: 'info', path: '/pages/profile-settings/profile-settings' },
 ]
 
 module.exports = {

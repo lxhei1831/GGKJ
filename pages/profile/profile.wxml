@@ -23,9 +23,13 @@
     <view class="section">
       <text class="section-title">我的功能</text>
       <view class="card menu-card">
-        <view class="menu-row" wx:for="{{menus}}" wx:key="title" bindtap="openMenu" data-title="{{item.title}}">
-          <view>
-            <text class="card-title">{{item.title}}</text>
+        <view class="menu-row" wx:for="{{menus}}" wx:key="key" bindtap="openMenu" data-path="{{item.path}}">
+          <text class="menu-mark">{{item.mark}}</text>
+          <view class="menu-main">
+            <view class="menu-title-row">
+              <text class="card-title">{{item.title}}</text>
+              <text class="badge badge-{{item.statusKey}}">{{item.status}}</text>
+            </view>
             <text class="card-desc">{{item.desc}}</text>
           </view>
           <text class="menu-arrow">›</text>
@@ -56,7 +60,16 @@
       <view class="card contact-card">
         <text class="card-title">联系客服</text>
         <text class="card-desc">检测结果、TRO案件和律师服务都可从这里发起咨询。</text>
-        <view class="primary-button contact-button" bindtap="contactService">在线咨询</view>
+        <button
+          class="primary-button contact-button contact-native-button"
+          open-type="contact"
+          session-from="profile"
+          show-message-card="true"
+          send-message-title="跨境侵权风险咨询"
+          send-message-path="/pages/profile/profile"
+        >
+          在线咨询
+        </button>
       </view>
     </view>
   </view>

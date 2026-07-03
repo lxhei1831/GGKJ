@@ -1,0 +1,41 @@
+<view class="page-shell">
+  <view class="page-content profile-feature-page">
+    <view class="hero-panel feature-hero feature-hero-orders">
+      <text class="eyebrow">服务订单中心</text>
+      <text class="hero-title">我的订单</text>
+      <text class="hero-desc">暂无订单。待检测后会展示检测服务、会员套餐、律师服务和报告导出等订单进度。</text>
+    </view>
+
+    <view class="section">
+      <view class="empty-panel">
+        <text class="empty-mark">单</text>
+        <text class="empty-title">暂无订单</text>
+        <text class="empty-desc">待检测后，这里会自动沉淀你购买的服务记录、支付状态和交付内容。</text>
+        <view class="secondary-button empty-button" bindtap="goContact">查看可用服务</view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">订单类型</text>
+      <view class="card service-card" wx:for="{{serviceTypes}}" wx:key="title">
+        <view class="row-between">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-desc">{{item.desc}}</text>
+          </view>
+          <text class="badge badge-info">{{item.badge}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">订单记录</text>
+      <view class="card checklist-card">
+        <view class="feature-list-row" wx:for="{{orderFields}}" wx:key="*this">
+          <text class="feature-dot"></text>
+          <text class="feature-list-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

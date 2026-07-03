@@ -1,0 +1,97 @@
+page {
+  min-height: 100vh;
+}
+
+.profile-feature-page {
+  padding-bottom: 72rpx;
+}
+
+.feature-hero-orders {
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 52%, rgba(14, 165, 233, 0.1) 100%);
+}
+
+.empty-panel {
+  padding: 34rpx 28rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(255, 255, 255, 0) 62%, rgba(100, 116, 139, 0.08) 100%);
+  border: 1rpx double rgba(51, 65, 85, 0.16);
+  box-shadow:
+    inset 2rpx -2rpx 1rpx -1rpx rgba(255, 255, 255, 0.92),
+    inset -2rpx 2rpx 1rpx -1rpx rgba(255, 255, 255, 0.84),
+    inset 0 0 3rpx rgba(15, 23, 42, 0.28),
+    0 14rpx 32rpx rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+.empty-mark {
+  width: 72rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  margin: 0 auto;
+  border-radius: 18rpx;
+  display: block;
+  color: #ffffff;
+  background: #2563eb;
+  font-size: 32rpx;
+  font-weight: 900;
+}
+
+.empty-title {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 30rpx;
+  font-weight: 850;
+  color: #111827;
+}
+
+.empty-desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.empty-button {
+  margin-top: 24rpx;
+}
+
+.service-card {
+  margin-top: 18rpx;
+}
+
+.feature-list-row {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 18rpx;
+}
+
+.feature-list-row:first-child {
+  margin-top: 0;
+}
+
+.feature-dot {
+  width: 14rpx;
+  height: 14rpx;
+  margin-top: 13rpx;
+  border-radius: 999rpx;
+  background: #2563eb;
+  flex: none;
+}
+
+.feature-list-text {
+  margin-left: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.5;
+  color: #334155;
+}

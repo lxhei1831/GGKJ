@@ -1,0 +1,43 @@
+<view class="page-shell">
+  <view class="page-content profile-feature-page">
+    <view class="hero-panel feature-hero-messages">
+      <text class="eyebrow">通知收件箱</text>
+      <text class="hero-title">消息通知</text>
+      <text class="hero-desc">暂无消息。待检测后会展示检测结果、TRO预警、客服回复和订单状态。</text>
+    </view>
+
+    <view class="section">
+      <view class="empty-panel">
+        <text class="empty-mark">信</text>
+        <text class="empty-title">暂无消息</text>
+        <text class="empty-desc">待检测后，重要提醒会出现在这里，并按未读、风险等级和处理时限进行标记。</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">通知分类</text>
+      <view class="card message-card" wx:for="{{categories}}" wx:key="title">
+        <view class="row-between">
+          <view>
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-desc">{{item.desc}}</text>
+          </view>
+          <text class="badge badge-info">{{item.count}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">提醒方式</text>
+      <view class="card timeline-card">
+        <view class="timeline-row" wx:for="{{timeline}}" wx:key="title">
+          <text class="timeline-node">{{index + 1}}</text>
+          <view class="timeline-main">
+            <text class="card-title">{{item.title}}</text>
+            <text class="card-desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
