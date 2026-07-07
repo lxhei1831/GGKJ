@@ -5,7 +5,6 @@ const {
 } = require('../../data/mock')
 const {
   detectRisk,
-  MODEL_INTEGRATION_STATUS,
 } = require('../../services/riskEngine')
 const {
   getRecentReports,
@@ -19,6 +18,7 @@ const defaultForm = {
   copyText: '',
   category: '',
   imageCount: 0,
+  imageFiles: [],
   batchFileName: '',
 }
 
@@ -38,7 +38,6 @@ Page({
     result: null,
     recentReports: [],
     loading: false,
-    modelStatus: MODEL_INTEGRATION_STATUS,
   },
   onShow() {
     const pendingMode = wx.getStorageSync('pendingDetectMode')
@@ -88,9 +87,11 @@ Page({
     })
   },
   chooseImage() {
-    const onSuccess = (count) => {
+    const onSuccess = (res) => {
+      const imageFiles = getImageUploadService().normalizeChosenImages(res)
       this.setData({
-        'form.imageCount': count,
+        'form.imageCount': imageFiles.length,
+        'form.imageFiles': imageFiles,
         result: null,
       })
     }
@@ -99,14 +100,14 @@ Page({
       wx.chooseMedia({
         count: 6,
         mediaType: ['image'],
-        success: (res) => onSuccess(res.tempFiles.length),
+        success: onSuccess,
       })
       return
     }
 
     wx.chooseImage({
       count: 6,
-      success: (res) => onSuccess(res.tempFilePaths.length),
+      success: onSuccess,
     })
   },
   chooseBatchFile() {
@@ -149,9 +150,11 @@ Page({
 
     this.setData({ loading: true })
 
-    detectRisk(payload)
+    getImageUploadService().uploadDetectionImages(payload.imageFiles)
+      .then((imageFileIDs) => detectRisk(this.buildDetectionPayload(payload, imageFileIDs)))
       .then((result) => {
-        saveDetectionReport(payload, result, {
+        const reportPayload = this.buildDetectionPayload(payload, [])
+        saveDetectionReport(reportPayload, result, {
           modeLabel: this.data.activeModeLabel,
         })
         this.setData({
@@ -178,4 +181,15 @@ Page({
       payload.batchFileName
     )
   },
+  buildDetectionPayload(payload, imageFileIDs) {
+    const nextPayload = Object.assign({}, payload, {
+      imageFileIDs: imageFileIDs || [],
+    })
+    delete nextPayload.imageFiles
+    return nextPayload
+  },
 })
+
+function getImageUploadService() {
+  return require('../../services/imageUpload')
+}

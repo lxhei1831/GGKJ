@@ -33,7 +33,10 @@
           <text class="field-label">冻结金额</text>
           <input class="text-input" type="number" placeholder="输入冻结金额，单位美元" value="{{caseForm.freezeAmount}}" data-field="freezeAmount" bindinput="bindInput" />
         </view>
-        <view class="primary-button tro-button" bindtap="analyzeCase">生成应急建议</view>
+        <view class="primary-button tro-button" bindtap="analyzeCase">
+          <block wx:if="{{loading}}">生成中...</block>
+          <block wx:else>生成应急建议</block>
+        </view>
       </view>
       <view class="card case-result-card" wx:if="{{caseResult}}">
         <view class="row-between">

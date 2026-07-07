@@ -1,13 +1,14 @@
-const AI_CONFIG = {
-  enableRemoteModel: false,
-  endpoint: 'https://your-domain.com/api/risk-detect',
-  timeout: 20000,
-}
+const {
+  AI_CLOUD_FUNCTION_NAME,
+  callAiTask,
+} = require('./aiClient')
+const {
+  markFirstListItem,
+} = require('./localRuleLabel')
 
-const MODEL_INTEGRATION_STATUS = {
-  name: '大模型检测接口',
-  status: '待接入',
-  desc: '当前使用本地规则模拟评分；后续替换AI_CONFIG.endpoint并开启enableRemoteModel即可。',
+const AI_CONFIG = {
+  enableRemoteModel: true,
+  cloudFunctionName: AI_CLOUD_FUNCTION_NAME,
 }
 
 const highRiskTerms = [
@@ -196,33 +197,7 @@ function runLocalDetection(payload) {
 
 // 大模型/后端检测接口统一从这里接入，页面层不要直接 wx.request。
 function callModelDetection(payload, options) {
-  const config = Object.assign({}, AI_CONFIG, options || {})
-
-  return new Promise((resolve, reject) => {
-    wx.request({
-      url: config.endpoint,
-      method: 'POST',
-      timeout: config.timeout,
-      header: {
-        'content-type': 'application/json',
-      },
-      data: {
-        scene: 'cross_border_ip_risk_detection',
-        version: 'v1',
-        input: payload,
-      },
-      success(res) {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.data)
-          return
-        }
-        reject(new Error(`Model API status ${res.statusCode}`))
-      },
-      fail(err) {
-        reject(err)
-      },
-    })
-  })
+  return callAiTask('risk_detect', payload, Object.assign({}, AI_CONFIG, options || {}))
 }
 
 function mergeModelResult(localResult, modelResult) {
@@ -243,19 +218,24 @@ function mergeModelResult(localResult, modelResult) {
   })
 }
 
-function detectRisk(payload) {
+function detectRisk(payload, options) {
   const localResult = runLocalDetection(payload)
 
   if (!AI_CONFIG.enableRemoteModel) {
     return Promise.resolve(localResult)
   }
 
-  return callModelDetection(payload)
+  return callModelDetection(payload, options)
     .then((modelResult) => mergeModelResult(localResult, modelResult))
-    .catch(() => Object.assign({}, localResult, {
-      modelFallback: true,
-      source: 'local-rule-fallback',
-    }))
+    .catch(() => markLocalDetectionFallback(localResult))
+}
+
+function markLocalDetectionFallback(localResult) {
+  return Object.assign({}, localResult, {
+    modelFallback: true,
+    source: 'local-rule-fallback',
+    suggestions: markFirstListItem(localResult.suggestions, '当前使用本地规则生成检测建议。'),
+  })
 }
 
 function formatNow() {
@@ -269,9 +249,9 @@ function formatNow() {
 
 module.exports = {
   AI_CONFIG,
-  MODEL_INTEGRATION_STATUS,
   detectRisk,
   runLocalDetection,
   callModelDetection,
   mergeModelResult,
+  markLocalDetectionFallback,
 }

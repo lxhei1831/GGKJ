@@ -55,7 +55,6 @@ assertLiquidGlassBackground('pages/case-detail/case-detail.wxss', '.case-detail-
   ['pages/detect/detect.wxss', '.mode-card'],
   ['pages/detect/detect.wxss', '.mode-card-active'],
   ['pages/detect/detect.wxss', '.upload-panel'],
-  ['pages/detect/detect.wxss', '.model-note'],
   ['pages/detect/detect.wxss', '.risk-block'],
   ['pages/tro/tro.wxss', '.tro-hero'],
   ['pages/tro/tro.wxss', '.lawyer-service-card'],

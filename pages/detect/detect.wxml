@@ -37,7 +37,6 @@
           <text class="section-title">检测信息</text>
           <text class="section-subtitle">{{activeModeDesc}}</text>
         </view>
-        <text class="badge badge-info">{{modelStatus.status}}</text>
       </view>
 
       <view class="input-card">
@@ -103,11 +102,6 @@
             <textarea class="text-area" placeholder="说明重点类目、店铺名称或需要关注的品牌词" value="{{form.copyText}}" data-field="copyText" bindinput="bindInput"></textarea>
           </view>
         </block>
-
-        <view class="model-note">
-          <text class="model-note-title">{{modelStatus.name}}</text>
-          <text class="model-note-desc">{{modelStatus.desc}}</text>
-        </view>
 
         <view class="button-row">
           <view class="ghost-button button-half" bindtap="resetForm">清空</view>
