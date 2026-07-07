@@ -19,17 +19,16 @@
       <view class="section-head">
         <view>
           <text class="section-title">快捷检测</text>
-          <text class="section-subtitle">按场景进入检测模块，后续统一生成报告。</text>
+          <text class="section-subtitle">进入检测页后选择检测类型，避免重复选择。</text>
         </view>
       </view>
-      <view class="grid-two">
-        <view class="grid-item" wx:for="{{quickActions}}" wx:key="mode">
-          <view class="card action-card action-{{item.tone}}" bindtap="goDetect" data-mode="{{item.mode}}">
-            <view class="action-mark"></view>
-            <text class="card-title">{{item.title}}</text>
-            <text class="card-desc">{{item.desc}}</text>
-          </view>
+      <view class="card quick-detect-card" bindtap="goDetect">
+        <view class="quick-detect-copy">
+          <view class="action-mark"></view>
+          <text class="card-title">快捷检测</text>
+          <text class="card-desc">产品链接、图片、关键词、文案版权、外观专利和批量表格统一从这里进入。</text>
         </view>
+        <view class="primary-button quick-detect-button">开始快捷检测</view>
       </view>
     </view>
 

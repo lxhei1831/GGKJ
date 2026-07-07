@@ -4,13 +4,6 @@ const dashboardMetrics = [
   { label: '近期TRO案件', value: '36', change: '重点关注 11 件', level: 'high' },
 ]
 
-const quickActions = [
-  { title: '产品快速检测', desc: '链接、标题、图片与类目综合评估', mode: 'product', tone: 'teal' },
-  { title: '图片快速检测', desc: 'Logo、IP角色、图案和外观元素识别', mode: 'image', tone: 'blue' },
-  { title: '关键词快速检测', desc: '商标词、品牌词、IP词和TRO词筛查', mode: 'keyword', tone: 'amber' },
-  { title: '店铺批量检测', desc: 'Excel批量导入，输出分级处理建议', mode: 'batch', tone: 'slate' },
-]
-
 const successCases = [
   {
     id: 'amazon-light-string-image-review',
@@ -127,7 +120,6 @@ const profileMenus = [
 
 module.exports = {
   dashboardMetrics,
-  quickActions,
   successCases,
   detectionModes,
   platforms,

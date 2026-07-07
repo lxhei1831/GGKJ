@@ -48,7 +48,7 @@ assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.contact-card')
 assertLiquidGlassBackground('pages/case-detail/case-detail.wxss', '.case-detail-hero')
 
 ;[
-  ['pages/index/index.wxss', '.action-card'],
+  ['pages/index/index.wxss', '.quick-detect-card'],
   ['pages/index/index.wxss', '.case-card'],
   ['pages/case-detail/case-detail.wxss', '.case-detail-hero'],
   ['pages/detect/detect.wxss', '.detect-hero'],

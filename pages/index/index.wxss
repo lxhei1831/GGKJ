@@ -39,9 +39,12 @@ page {
   color: #64748b;
 }
 
-.action-card {
-  min-height: 190rpx;
-  margin-top: 0;
+.quick-detect-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  min-height: 172rpx;
   position: relative;
   overflow: hidden;
   background:
@@ -51,8 +54,18 @@ page {
     linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(14, 165, 233, 0.1) 100%);
 }
 
-.action-card:active {
+.quick-detect-card:active {
   transform: scale(0.98);
+}
+
+.quick-detect-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.quick-detect-button {
+  width: 220rpx;
+  flex: none;
 }
 
 .action-mark {
@@ -61,18 +74,6 @@ page {
   border-radius: 999rpx;
   margin-bottom: 18rpx;
   background: #2563eb;
-}
-
-.action-blue .action-mark {
-  background: #3b82f6;
-}
-
-.action-amber .action-mark {
-  background: #64748b;
-}
-
-.action-slate .action-mark {
-  background: #475467;
 }
 
 .case-list {

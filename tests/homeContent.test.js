@@ -11,7 +11,8 @@ function read(file) {
 const homeTemplate = read('pages/index/index.wxml')
 const homeScript = read('pages/index/index.js')
 const homeStyles = read('pages/index/index.wxss')
-const { successCases } = require('../data/mock')
+const mockData = require('../data/mock')
+const { successCases } = mockData
 
 function selectorBlock(css, selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -27,6 +28,15 @@ assert(!homeTemplate.includes('goTro'), 'risk overview should not keep a TRO eme
 
 assert(!homeScript.includes('recentReports'), 'home data should not import or expose mock recent reports')
 assert(!homeScript.includes('goTro'), 'home script should not keep unused TRO navigation')
+
+assert(!homeTemplate.includes('quickActions'), 'quick detection should not render duplicated scenario cards')
+assert(!homeTemplate.includes('wx:for="{{quickActions}}"'), 'quick detection should not loop over detection scenarios')
+assert(!homeTemplate.includes('data-mode'), 'single quick detection button should not preselect a detection mode')
+assert(homeTemplate.includes('quick-detect-button'), 'risk overview should render one clear quick detection button')
+assert(homeTemplate.includes('开始快捷检测'), 'risk overview should use one primary quick detection action')
+assert(!homeScript.includes('quickActions'), 'home data should not import or expose quick detection cards')
+assert(!homeScript.includes('pendingDetectMode'), 'home navigation should not set a duplicated detection mode')
+assert(!Object.prototype.hasOwnProperty.call(mockData, 'quickActions'), 'mock data should not export removed quick detection cards')
 
 assert(homeTemplate.includes('成功案例'), 'risk overview should show a success cases module')
 assert(homeTemplate.includes('successCases'), 'risk overview should render success cases from page data')
