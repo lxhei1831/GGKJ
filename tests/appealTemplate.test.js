@@ -2,28 +2,26 @@ const assert = require('assert')
 
 const {
   REQUIRED_APPEAL_FIELDS,
+  formatAppealTemplateBlocks,
   validateAppealForm,
   buildPlatformAppealTemplate,
 } = require('../services/appealTemplate')
 
 const completeForm = {
-  noticeNo: 'CASE-20260707',
-  shopName: 'GGKJ Store',
-  complaintReason: '平台提示商品图片存在疑似版权或商标争议',
-  rectification: '已立即下架相关内容，替换争议素材，并完成内部复核',
-  evidence: '原创设计源文件、供应商授权说明、整改前后截图',
-  contact: 'compliance@example.com',
+  caseSummary: 'The listing was flagged for a suspected copyright or trademark issue related to product images.',
+  actionTaken: 'We immediately removed the disputed material, replaced the images, and completed an internal compliance review.',
+  evidenceReady: 'Original design files, supplier authorization, and before-and-after screenshots are ready for review.',
 }
 
 assert.deepStrictEqual(
   REQUIRED_APPEAL_FIELDS.map((field) => field.key),
-  ['noticeNo', 'shopName', 'complaintReason', 'rectification', 'evidence', 'contact'],
-  'appeal form should require only the agreed user-completed fields'
+  ['caseSummary', 'actionTaken', 'evidenceReady'],
+  'appeal form should require only three compact user-completed fields'
 )
 
 assert.strictEqual(
-  validateAppealForm(Object.assign({}, completeForm, { evidence: '' })).missingField,
-  '证据材料说明',
+  validateAppealForm(Object.assign({}, completeForm, { evidenceReady: '' })).missingField,
+  '可提供证明材料',
   'validation should ask the user to complete missing required information before generation'
 )
 
@@ -35,12 +33,28 @@ assert.strictEqual(
 
 const template = buildPlatformAppealTemplate('Amazon', completeForm)
 
-assert(template.includes('Amazon平台审核团队'), 'template should address the selected platform')
-assert(template.includes('CASE-20260707'), 'template should include the complaint or notice number')
-assert(template.includes('GGKJ Store'), 'template should include the shop name')
-assert(template.includes('已立即下架相关内容'), 'template should include rectification actions')
-assert(template.includes('原创设计源文件'), 'template should include evidence description')
-assert(template.includes('compliance@example.com'), 'template should include contact information')
-assert(template.includes('请协助重新审核'), 'template should include a direct review request')
+assert(template.includes('Dear Amazon Review Team,'), 'template should address the selected platform in English')
+assert(template.includes('Request for Reconsideration'), 'template should include a professional English subject line')
+assert(template.includes('The listing was flagged'), 'template should include the user-provided case summary')
+assert(template.includes('We immediately removed'), 'template should include rectification actions')
+assert(template.includes('Original design files'), 'template should include evidence description')
+assert(template.includes('respectfully request a manual reconsideration'), 'template should include a persuasive review request')
+assert(template.includes('Sincerely,'), 'template should include a formal English closing')
+assert(!/[一二三四]、/.test(template), 'template should not use Chinese numbered sections')
+assert(!template.includes('您好'), 'template should not include Chinese greeting text')
 assert(!template.includes('产品链接'), 'template should not include a product link section')
 assert(!template.toLowerCase().includes('http'), 'template should not include URLs')
+
+const blocks = formatAppealTemplateBlocks(template)
+
+assert(blocks.length >= 8, 'formatted template should expose every visible letter section')
+assert.deepStrictEqual(
+  blocks.map((block) => block.id),
+  blocks.map((_, index) => `template-block-${index}`),
+  'formatted template blocks should have stable ids for rendering'
+)
+assert.strictEqual(blocks[0].type, 'salutation', 'first block should render as the letter salutation')
+assert.strictEqual(blocks[1].type, 'subject', 'subject block should be visually distinguishable')
+assert.strictEqual(blocks[blocks.length - 1].type, 'closing', 'final block should render as the formal closing')
+assert(blocks.every((block) => block.content.trim()), 'formatted template blocks should not include blank visual rows')
+assert(blocks.some((block) => block.content.includes('manual reconsideration')), 'formatted blocks should preserve complete template content')

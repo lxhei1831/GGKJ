@@ -1,10 +1,19 @@
 const REQUIRED_APPEAL_FIELDS = [
-  { key: 'noticeNo', label: '投诉编号/通知编号' },
-  { key: 'shopName', label: '店铺名称' },
-  { key: 'complaintReason', label: '被投诉原因' },
-  { key: 'rectification', label: '已整改动作' },
-  { key: 'evidence', label: '证据材料说明' },
-  { key: 'contact', label: '联系方式' },
+  {
+    key: 'caseSummary',
+    label: '平台通知/处罚原因',
+    placeholder: '例如：图片版权争议、商标误判、商品合规提示',
+  },
+  {
+    key: 'actionTaken',
+    label: '已完成整改动作',
+    placeholder: '例如：已下架争议内容，替换图片并完成内部复核',
+  },
+  {
+    key: 'evidenceReady',
+    label: '可提供证明材料',
+    placeholder: '例如：原创文件、授权证明、整改前后截图',
+  },
 ]
 
 function cleanText(value) {
@@ -38,34 +47,64 @@ function validateAppealForm(form) {
 }
 
 function buildPlatformAppealTemplate(platform, form) {
-  const targetPlatform = cleanText(platform) || '平台'
+  const targetPlatform = cleanText(platform) || 'Platform'
   const normalizedForm = normalizeAppealForm(form)
 
   return [
-    `${targetPlatform}平台审核团队：`,
+    `Dear ${targetPlatform} Review Team,`,
     '',
-    `您好，我们是${normalizedForm.shopName}。关于贵平台通知/投诉编号 ${normalizedForm.noticeNo}，我们已第一时间完成内部核查。`,
+    `Subject: Request for Reconsideration and Compliance Review`,
     '',
-    `一、情况说明`,
-    `本次被投诉或审核提示的原因是：${normalizedForm.complaintReason}。我们理解平台对知识产权、商品合规和消费者体验的审核要求，并已针对该问题进行处理。`,
+    `We are writing to respectfully request a manual reconsideration of the recent enforcement action or complaint notice. We fully understand and respect the policies of ${targetPlatform} regarding intellectual property protection, listing accuracy, product compliance, and customer trust.`,
     '',
-    `二、整改动作`,
-    `${normalizedForm.rectification}。后续我们会继续加强上架前审核，避免类似问题再次发生。`,
+    `Case summary: ${normalizedForm.caseSummary}`,
     '',
-    `三、证据材料`,
-    `我们可提供或已准备的材料包括：${normalizedForm.evidence}。如平台需要进一步补充材料，我们会积极配合提交。`,
+    `Corrective actions taken: ${normalizedForm.actionTaken}`,
     '',
-    `四、处理请求`,
-    `请协助重新审核本次投诉/通知事项，并根据我们已完成的整改情况恢复相关权限或告知下一步处理要求。`,
+    `Supporting evidence available: ${normalizedForm.evidenceReady}`,
     '',
-    `联系人/联系方式：${normalizedForm.contact}`,
+    `Based on the actions above, we believe the issue has been addressed in good faith and in a manner consistent with platform compliance expectations. We have strengthened our internal review process to prevent similar concerns from occurring again, including additional pre-listing checks, evidence retention, and escalation review for potentially sensitive content.`,
     '',
-    `感谢审核。`,
+    `We respectfully request a manual reconsideration of this matter and ask that the affected listing, account function, or enforcement status be reviewed again in light of the corrective measures and supporting documentation. If any additional information is required, we will provide it promptly and cooperate fully with the review process.`,
+    '',
+    `Thank you for your time and careful consideration.`,
+    '',
+    `Sincerely,`,
+    `Compliance Team`,
   ].join('\n')
+}
+
+function getTemplateBlockType(content, index) {
+  if (index === 0 && content.startsWith('Dear ')) {
+    return 'salutation'
+  }
+
+  if (content.startsWith('Subject:')) {
+    return 'subject'
+  }
+
+  if (content.startsWith('Sincerely,')) {
+    return 'closing'
+  }
+
+  return 'paragraph'
+}
+
+function formatAppealTemplateBlocks(template) {
+  return cleanText(template)
+    .split(/\n\s*\n/)
+    .map((content) => cleanText(content))
+    .filter(Boolean)
+    .map((content, index) => ({
+      id: `template-block-${index}`,
+      type: getTemplateBlockType(content, index),
+      content,
+    }))
 }
 
 module.exports = {
   REQUIRED_APPEAL_FIELDS,
+  formatAppealTemplateBlocks,
   validateAppealForm,
   buildPlatformAppealTemplate,
 }

@@ -1,5 +1,6 @@
 const {
   REQUIRED_APPEAL_FIELDS,
+  formatAppealTemplateBlocks,
   validateAppealForm,
   buildPlatformAppealTemplate,
 } = require('../../services/appealTemplate')
@@ -15,13 +16,14 @@ Page({
     appealFields: REQUIRED_APPEAL_FIELDS,
     appealForm: Object.assign({}, defaultAppealForm),
     generatedTemplate: '',
+    generatedTemplateBlocks: [],
   },
   onLoad(options) {
     const platform = options.platform ? decodeURIComponent(options.platform) : '平台'
 
     this.setData({ platform })
     wx.setNavigationBarTitle({
-      title: `${platform}投诉模板`,
+      title: `${platform}英文申诉模板`,
     })
   },
   bindAppealInput(event) {
@@ -30,6 +32,7 @@ Page({
     this.setData({
       [`appealForm.${field}`]: event.detail.value,
       generatedTemplate: '',
+      generatedTemplateBlocks: [],
     })
   },
   generateAppealTemplate() {
@@ -43,8 +46,11 @@ Page({
       return
     }
 
+    const generatedTemplate = buildPlatformAppealTemplate(this.data.platform, validation.form)
+
     this.setData({
-      generatedTemplate: buildPlatformAppealTemplate(this.data.platform, validation.form),
+      generatedTemplate,
+      generatedTemplateBlocks: formatAppealTemplateBlocks(generatedTemplate),
     })
 
     wx.showToast({

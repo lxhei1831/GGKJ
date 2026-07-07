@@ -2,8 +2,8 @@
   <view class="page-content appeal-template-page">
     <view class="hero-panel appeal-template-hero">
       <text class="eyebrow">平台申诉文案</text>
-      <text class="hero-title">{{platform}}通用申诉模板</text>
-      <text class="hero-desc">补全必要信息后，生成一段可直接发送给平台审核团队的通用说明文案。</text>
+      <text class="hero-title">{{platform}}英文专业申诉模板</text>
+      <text class="hero-desc">只需补全3项关键信息，生成一封更正式、更有说服力的英文申诉信。</text>
     </view>
 
     <view class="section">
@@ -11,7 +11,7 @@
         <view class="row-between">
           <view>
             <text class="card-title">补全申诉信息</text>
-            <text class="card-desc">请按平台通知和实际整改情况填写。</text>
+            <text class="card-desc">用简短事实描述即可，系统会组织成英文专业表达。</text>
           </view>
           <text class="badge badge-info">不含链接</text>
         </view>
@@ -19,22 +19,40 @@
         <view class="field" wx:for="{{appealFields}}" wx:key="key">
           <text class="field-label">{{item.label}}</text>
           <textarea
-            class="text-area template-area"
-            placeholder="请输入{{item.label}}"
+            class="text-area template-area compact-template-area"
+            placeholder="{{item.placeholder}}"
             value="{{appealForm[item.key]}}"
             data-field="{{item.key}}"
             bindinput="bindAppealInput"
+            maxlength="180"
+            auto-height="{{false}}"
           ></textarea>
         </view>
 
-        <view class="primary-button template-button" bindtap="generateAppealTemplate">生成通用模板</view>
+        <view class="primary-button template-button" bindtap="generateAppealTemplate">生成英文申诉模板</view>
       </view>
     </view>
 
     <view class="section" wx:if="{{generatedTemplate}}">
       <view class="card generated-template-card">
-        <text class="card-title">可发送模板</text>
-        <textarea class="text-area generated-template-area" value="{{generatedTemplate}}" disabled></textarea>
+        <view class="row-between">
+          <view>
+            <text class="card-title">可发送英文模板</text>
+            <text class="card-desc">下方为完整预览，复制后可直接发送给平台审核团队。</text>
+          </view>
+          <text class="badge badge-info">完整预览</text>
+        </view>
+
+        <view class="letter-preview">
+          <view
+            class="letter-paragraph letter-paragraph-{{item.type}}"
+            wx:for="{{generatedTemplateBlocks}}"
+            wx:key="id"
+          >
+            <text selectable="{{true}}">{{item.content}}</text>
+          </view>
+        </view>
+
         <view class="secondary-button template-button" bindtap="copyGeneratedTemplate">复制模板</view>
       </view>
     </view>
