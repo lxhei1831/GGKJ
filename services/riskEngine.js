@@ -11,12 +11,6 @@ const AI_CONFIG = {
   cloudFunctionName: AI_CLOUD_FUNCTION_NAME,
 }
 
-const MODEL_INTEGRATION_STATUS = {
-  name: 'AI云函数检测',
-  status: '已接入',
-  desc: '当前通过微信云函数调用AI模型；接口异常时会自动使用本地规则兜底。',
-}
-
 const highRiskTerms = [
   'disney',
   'marvel',
@@ -255,7 +249,6 @@ function formatNow() {
 
 module.exports = {
   AI_CONFIG,
-  MODEL_INTEGRATION_STATUS,
   detectRisk,
   runLocalDetection,
   callModelDetection,

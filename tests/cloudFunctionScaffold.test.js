@@ -25,6 +25,7 @@ assert(functionScript.includes('/chat/completions'), 'cloud function should call
 assert(functionScript.includes('exports.main'), 'cloud function should expose a main handler')
 assert(functionScript.includes('tro_advice'), 'cloud function should support the TRO advice task')
 assert(functionScript.includes('risk_detect'), 'cloud function should support the risk detection task')
+assert(functionScript.includes('image_url'), 'cloud function should support vision image inputs')
 assert(!functionScript.includes('sk-'), 'cloud function source should not contain a hard-coded API key')
 
 assert.strictEqual(functionPackage.main, 'index.js', 'cloud function package should point at index.js')

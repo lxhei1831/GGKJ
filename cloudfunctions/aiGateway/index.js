@@ -31,7 +31,7 @@ exports.main = async (event) => {
   }
 }
 
-function requestModel(task, input) {
+async function requestModel(task, input) {
   const apiKey = process.env.AI_API_KEY
   if (!apiKey) {
     throw new Error('Missing AI_API_KEY environment variable')
@@ -39,17 +39,19 @@ function requestModel(task, input) {
 
   const baseUrl = trimTrailingSlash(process.env.AI_BASE_URL || DEFAULT_BASE_URL)
   const model = process.env.AI_MODEL || DEFAULT_MODEL
+  const imageUrls = await resolveImageUrls(input)
 
   return postJson(`${baseUrl}/chat/completions`, {
     model,
-    messages: buildMessages(task, input),
+    messages: buildMessages(task, input, imageUrls),
   }, apiKey)
     .then(extractMessageContent)
     .then(parseJsonContent)
 }
 
-function buildMessages(task, input) {
+function buildMessages(task, input, imageUrls) {
   const config = getTaskConfig(task)
+  const promptInput = buildPromptInput(input, imageUrls)
 
   return [
     {
@@ -58,10 +60,10 @@ function buildMessages(task, input) {
     },
     {
       role: 'user',
-      content: JSON.stringify({
+      content: buildUserContent({
         task,
-        input,
-      }),
+        input: promptInput,
+      }, imageUrls),
     },
   ]
 }
@@ -81,14 +83,67 @@ function getTaskConfig(task) {
   }
 
   return {
-    systemPrompt: [
-      '你是跨境电商知识产权和TRO风险检测助手。',
-      '请根据用户提交的商品、平台、市场、关键词、文案和图片说明判断侵权风险。',
-      '只返回一个JSON对象，不要返回Markdown、代码块或额外解释。',
-      'JSON字段必须包含: score, riskItems, suggestions, jurisdiction, canPublish。',
-      'score为0到100的数字；riskItems为数组，每项包含title、detail、level，level只能是low、medium、high；suggestions为字符串数组；canPublish为布尔值。',
+      systemPrompt: [
+        '你是跨境电商知识产权和TRO风险检测助手。',
+        '请根据用户提交的商品、平台、市场、关键词、文案、图片说明以及随消息附带的图片判断侵权风险。',
+        '如果消息附带图片，请直接检查图片中的Logo、IP角色、肖像、图案、包装、外观设计和视觉相似风险。',
+        '只返回一个JSON对象，不要返回Markdown、代码块或额外解释。',
+        'JSON字段必须包含: score, riskItems, suggestions, jurisdiction, canPublish。',
+        'score为0到100的数字；riskItems为数组，每项包含title、detail、level，level只能是low、medium、high；suggestions为字符串数组；canPublish为布尔值。',
     ].join('\n'),
   }
+}
+
+async function resolveImageUrls(input) {
+  const imageFileIDs = Array.isArray(input && input.imageFileIDs)
+    ? input.imageFileIDs.filter(Boolean)
+    : []
+  const imageUrls = Array.isArray(input && input.imageUrls)
+    ? input.imageUrls.filter(Boolean)
+    : []
+
+  if (!imageFileIDs.length) return imageUrls
+
+  const result = await cloud.getTempFileURL({
+    fileList: imageFileIDs,
+  })
+
+  const tempUrls = (result.fileList || [])
+    .map((file) => file.tempFileURL)
+    .filter(Boolean)
+
+  return imageUrls.concat(tempUrls)
+}
+
+function buildPromptInput(input, imageUrls) {
+  const promptInput = Object.assign({}, input || {})
+  delete promptInput.imageFileIDs
+  delete promptInput.imageUrls
+
+  if (imageUrls.length) {
+    promptInput.imageCount = imageUrls.length
+    promptInput.imageStatus = 'image_url attachments included in this message'
+  }
+
+  return promptInput
+}
+
+function buildUserContent(payload, imageUrls) {
+  const text = JSON.stringify(payload)
+
+  if (!imageUrls.length) {
+    return text
+  }
+
+  return [{
+    type: 'text',
+    text,
+  }].concat(imageUrls.map((url) => ({
+    type: 'image_url',
+    image_url: {
+      url,
+    },
+  })))
 }
 
 function normalizeTaskResult(task, result, input) {
