@@ -118,13 +118,6 @@ const aiAgents = [
   '跨境合规问答助手',
 ]
 
-const toolCards = [
-  { title: '被投诉申诉', desc: '生成平台申诉方案与材料清单' },
-  { title: '平台投诉模板', desc: 'Amazon、Temu、TikTok Shop、eBay中英文模板' },
-  { title: '盗图检测', desc: '原创图片盗用检测与投诉材料生成' },
-  { title: '英文申诉信助手', desc: '平台邮件、律师函回复和证据说明' },
-]
-
 const profileMenus = [
   { key: 'tro', mark: '案', title: '我的TRO案件', desc: '案件状态、下一步动作和截止时间', status: '待检测后生成', statusKey: 'medium', path: '/pages/profile-tro/profile-tro' },
   { key: 'orders', mark: '单', title: '我的订单', desc: '单次检测、会员订阅和律师服务订单', status: '暂无订单', statusKey: 'low', path: '/pages/profile-orders/profile-orders' },
@@ -140,6 +133,5 @@ module.exports = {
   platforms,
   countryRegions,
   aiAgents,
-  toolCards,
   profileMenus,
 }

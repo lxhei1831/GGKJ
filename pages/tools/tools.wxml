@@ -7,19 +7,6 @@
     </view>
 
     <view class="section">
-      <text class="section-title">工具入口</text>
-      <view class="grid-two tools-grid">
-        <view class="grid-item" wx:for="{{tools}}" wx:key="title">
-          <view class="card tool-card" bindtap="openTool" data-title="{{item.title}}">
-            <view class="tool-icon">{{index + 1}}</view>
-            <text class="card-title">{{item.title}}</text>
-            <text class="card-desc">{{item.desc}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="section">
       <text class="section-title">平台投诉模板</text>
       <view class="card">
         <view class="template-row" wx:for="{{platformTemplates}}" wx:key="platform">
@@ -27,7 +14,7 @@
             <text class="card-title">{{item.platform}}</text>
             <text class="card-desc">{{item.desc}}</text>
           </view>
-          <view class="secondary-button mini-button" bindtap="copyTemplate" data-platform="{{item.platform}}">生成</view>
+          <view class="secondary-button mini-button" bindtap="openTemplateGenerator" data-platform="{{item.platform}}">生成</view>
         </view>
       </view>
     </view>
