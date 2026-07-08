@@ -9,6 +9,8 @@
     "pages/appeal-template/appeal-template",
     "pages/profile/profile",
     "pages/profile-tro/profile-tro",
+    "pages/profile-reports/profile-reports",
+    "pages/report-detail/report-detail",
     "pages/profile-orders/profile-orders",
     "pages/profile-messages/profile-messages",
     "pages/profile-settings/profile-settings"

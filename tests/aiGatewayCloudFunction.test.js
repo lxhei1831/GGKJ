@@ -43,6 +43,46 @@ async function run() {
   assert.strictEqual(callArgs.data.input.productTitle, 'Disney inspired cup', 'cloud call should pass the detection payload')
   assert.strictEqual(modelResult.score, 86, 'cloud function data should be unwrapped for the page service')
 
+  const mergedResult = await detectRisk({
+    platform: 'Amazon',
+    countryRegion: '美国',
+    productTitle: 'KALA ukulele',
+  }, {
+    cloud: {
+      callFunction() {
+        return Promise.resolve({
+          result: {
+            ok: true,
+            data: {
+              score: 92,
+              riskItems: [{
+                title: 'USPTO candidate match',
+                detail: 'The uploaded mark is close to a registered KALA mark.',
+                level: 'high',
+              }],
+              suggestions: ['Download the PDF report and review it with counsel.'],
+              jurisdiction: 'Amazon US / 美国',
+              canPublish: false,
+              pdfReportFileID: 'cloud://risk-reports/kala.pdf',
+              pdfReportCloudPath: 'risk-reports/kala.pdf',
+              trademarkCandidates: [{
+                wordmark: 'KALA',
+                serialNumber: '8575079',
+              }],
+              usptoWarnings: ['sample warning'],
+            },
+          },
+        })
+      },
+    },
+  })
+
+  assert.strictEqual(mergedResult.pdfReportFileID, 'cloud://risk-reports/kala.pdf', 'merged AI detection result should keep the generated PDF file ID')
+  assert.strictEqual(mergedResult.pdfReportCloudPath, 'risk-reports/kala.pdf', 'merged AI detection result should keep the generated PDF cloud path')
+  assert.strictEqual(mergedResult.canPublish, false, 'merged AI detection result should keep the model publish decision')
+  assert.strictEqual(mergedResult.trademarkCandidates[0].wordmark, 'KALA', 'merged AI detection result should keep USPTO candidates for the page and history')
+  assert.strictEqual(mergedResult.usptoWarnings[0], 'sample warning', 'merged AI detection result should keep USPTO warnings')
+
   const fallbackResult = await detectRisk({
     platform: 'Amazon',
     productTitle: 'Disney inspired cup',

@@ -3,6 +3,7 @@ const assert = require('assert')
 const {
   MAX_REPORTS,
   REPORT_STORAGE_KEY,
+  getReportById,
   getRecentReports,
   saveDetectionReport,
 } = require('../services/reportStore')
@@ -37,6 +38,19 @@ const record = saveDetectionReport({
   level: { key: 'high', text: '高风险' },
   generatedAt: '06-30 15:20',
   jurisdiction: 'Amazon · 美国',
+  pdfReportFileID: 'cloud://risk-reports/report-1.pdf',
+  pdfReportCloudPath: 'risk-reports/report-1.pdf',
+  trademarkCandidates: [{
+    wordmark: 'BLUE MOON',
+    serialNumber: '90000001',
+  }],
+  riskItems: [{
+    title: '疑似商标近似',
+    detail: '图形与候选商标存在近似点。',
+    level: 'high',
+    levelText: '高',
+  }],
+  suggestions: ['下载PDF报告并交给律师复核。'],
 }, {
   modeLabel: '产品链接',
 }, storage)
@@ -49,10 +63,17 @@ assert.strictEqual(record.countryRegion, '美国', 'saved report should keep the
 assert.strictEqual(record.score, 82, 'saved report should keep the score')
 assert.strictEqual(record.level, 'high', 'saved report should keep the level key')
 assert.strictEqual(record.levelText, '高风险', 'saved report should keep the level text')
+assert.strictEqual(record.pdfReportFileID, 'cloud://risk-reports/report-1.pdf', 'saved report should keep the generated PDF file ID')
+assert.strictEqual(record.pdfReportCloudPath, 'risk-reports/report-1.pdf', 'saved report should keep the generated PDF cloud path')
+assert.strictEqual(record.payload.productTitle, 'Portable LED lamp', 'saved report should keep the submitted payload for detail view')
+assert.strictEqual(record.result.score, 82, 'saved report should keep the full detection result for detail view')
+assert.strictEqual(record.trademarkCandidates[0].wordmark, 'BLUE MOON', 'saved report should expose USPTO candidates at the top level')
 
 const reports = getRecentReports(storage)
 assert.strictEqual(reports.length, 1, 'saved report should be readable from storage')
 assert.deepStrictEqual(reports[0], record, 'latest report should be first')
+assert.deepStrictEqual(getReportById(record.id, storage), record, 'report storage should find a full report by ID')
+assert.strictEqual(getReportById('missing-report', storage), null, 'missing report IDs should return null')
 
 for (let index = 0; index < MAX_REPORTS + 2; index += 1) {
   saveDetectionReport({

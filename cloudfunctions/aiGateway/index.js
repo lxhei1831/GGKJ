@@ -1,6 +1,16 @@
 const cloud = require('wx-server-sdk')
+const fs = require('fs')
 const https = require('https')
 const http = require('http')
+const os = require('os')
+const path = require('path')
+const {
+  searchUsptoTrademarks,
+  shouldSearchUspto,
+} = require('./usptoSearch')
+const {
+  generatePdfReportBuffer,
+} = require('./pdfReport')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV,
@@ -14,11 +24,13 @@ exports.main = async (event) => {
   try {
     const task = normalizeTask(event && (event.task || event.scene))
     const input = event && (event.input || event.payload || {})
-    const modelResult = await requestModel(task, input)
+    const context = await buildTaskContext(task, input)
+    const modelResult = await requestModel(task, input, context)
+    const data = normalizeTaskResult(task, modelResult, input)
 
     return {
       ok: true,
-      data: normalizeTaskResult(task, modelResult, input),
+      data: await enrichTaskResponse(task, data, input, context),
     }
   } catch (error) {
     console.error('[aiGateway] failed', error)
@@ -31,27 +43,108 @@ exports.main = async (event) => {
   }
 }
 
-async function requestModel(task, input) {
-  const apiKey = process.env.AI_API_KEY
-  if (!apiKey) {
-    throw new Error('Missing AI_API_KEY environment variable')
+async function buildTaskContext(task, input) {
+  const imageUrls = await resolveImageUrls(input)
+  const context = {
+    imageUrls,
+    trademarkSignals: null,
+    trademarkSearchTerms: [],
+    trademarkCandidates: [],
+    warnings: [],
   }
 
-  const baseUrl = trimTrailingSlash(process.env.AI_BASE_URL || DEFAULT_BASE_URL)
-  const model = process.env.AI_MODEL || DEFAULT_MODEL
-  const imageUrls = await resolveImageUrls(input)
+  if (task !== 'risk_detect' || !shouldSearchUspto(input)) {
+    return context
+  }
 
-  return postJson(`${baseUrl}/chat/completions`, {
-    model,
-    messages: buildMessages(task, input, imageUrls),
-  }, apiKey)
+  try {
+    context.trademarkSignals = await requestTrademarkSignals(input, imageUrls)
+  } catch (error) {
+    context.warnings.push(`AI 商标线索提取失败：${error.message || 'unknown error'}`)
+  }
+
+  const usptoResult = await searchUsptoTrademarks(Object.assign({}, input, {
+    trademarkSignals: context.trademarkSignals,
+  }))
+  context.trademarkSearchTerms = usptoResult.terms || []
+  context.trademarkCandidates = usptoResult.candidates || []
+  context.warnings = context.warnings.concat(usptoResult.warnings || [])
+
+  return context
+}
+
+async function enrichTaskResponse(task, data, input, context) {
+  if (task !== 'risk_detect') return data
+
+  const enriched = Object.assign({}, data, {
+    trademarkSignals: context.trademarkSignals,
+    trademarkSearchTerms: context.trademarkSearchTerms,
+    trademarkCandidates: context.trademarkCandidates,
+    usptoWarnings: context.warnings,
+  })
+
+  try {
+    const pdfBuffer = await generatePdfReportBuffer({
+      input,
+      result: enriched,
+      imageUrls: context.imageUrls,
+      trademarkSignals: context.trademarkSignals,
+      trademarkCandidates: context.trademarkCandidates,
+      warnings: context.warnings,
+      generatedAt: formatReportTime(),
+    })
+    return Object.assign(enriched, await uploadPdfReport(pdfBuffer))
+  } catch (error) {
+    return Object.assign(enriched, {
+      pdfReportError: error.message || 'PDF report generation failed',
+    })
+  }
+}
+
+async function requestModel(task, input, context) {
+  const runtime = getAiRuntimeConfig()
+
+  return postJson(`${runtime.baseUrl}/chat/completions`, {
+    model: runtime.model,
+    messages: buildMessages(task, input, context),
+  }, runtime.apiKey)
     .then(extractMessageContent)
     .then(parseJsonContent)
 }
 
-function buildMessages(task, input, imageUrls) {
+async function requestTrademarkSignals(input, imageUrls) {
+  const runtime = getAiRuntimeConfig()
+
+  return postJson(`${runtime.baseUrl}/chat/completions`, {
+    model: runtime.model,
+    messages: [
+      {
+        role: 'system',
+        content: [
+          '你是商标检索线索提取助手。',
+          '根据用户上传的图片、标题、关键词和说明，提取适合去 USPTO 检索的商标词、图形元素、颜色和构图。',
+          '只返回一个JSON对象，不要返回Markdown或额外解释。',
+          'JSON字段包含: wordMarks, searchTerms, visualElements, colors, composition。',
+          '每个字段都是字符串数组，最多8项；无法识别时返回空数组。',
+        ].join('\n'),
+      },
+      {
+        role: 'user',
+        content: buildUserContent({
+          task: 'trademark_signal_extract',
+          input: buildPromptInput(input, { imageUrls }),
+        }, imageUrls, []),
+      },
+    ],
+  }, runtime.apiKey)
+    .then(extractMessageContent)
+    .then(parseJsonContent)
+    .then(normalizeTrademarkSignals)
+}
+
+function buildMessages(task, input, context) {
   const config = getTaskConfig(task)
-  const promptInput = buildPromptInput(input, imageUrls)
+  const promptInput = buildPromptInput(input, context)
 
   return [
     {
@@ -63,7 +156,7 @@ function buildMessages(task, input, imageUrls) {
       content: buildUserContent({
         task,
         input: promptInput,
-      }, imageUrls),
+      }, context.imageUrls, context.trademarkCandidates),
     },
   ]
 }
@@ -87,6 +180,8 @@ function getTaskConfig(task) {
         '你是跨境电商知识产权和TRO风险检测助手。',
         '请根据用户提交的商品、平台、市场、关键词、文案、图片说明以及随消息附带的图片判断侵权风险。',
         '如果消息附带图片，请直接检查图片中的Logo、IP角色、肖像、图案、包装、外观设计和视觉相似风险。',
+        '如果输入中包含USPTO候选商标和官方商标图，请把用户上传图与官方候选图进行近似度对比，重点判断文字、构图、图形元素、商品类别和实际使用场景。',
+        '输出要谨慎表述为风险初筛，不要宣称已经构成法律意义上的最终侵权。',
         '只返回一个JSON对象，不要返回Markdown、代码块或额外解释。',
         'JSON字段必须包含: score, riskItems, suggestions, jurisdiction, canPublish。',
         'score为0到100的数字；riskItems为数组，每项包含title、detail、level，level只能是low、medium、high；suggestions为字符串数组；canPublish为布尔值。',
@@ -115,7 +210,11 @@ async function resolveImageUrls(input) {
   return imageUrls.concat(tempUrls)
 }
 
-function buildPromptInput(input, imageUrls) {
+function buildPromptInput(input, context) {
+  const imageUrls = Array.isArray(context && context.imageUrls) ? context.imageUrls : []
+  const trademarkCandidates = Array.isArray(context && context.trademarkCandidates)
+    ? context.trademarkCandidates
+    : []
   const promptInput = Object.assign({}, input || {})
   delete promptInput.imageFileIDs
   delete promptInput.imageUrls
@@ -125,25 +224,82 @@ function buildPromptInput(input, imageUrls) {
     promptInput.imageStatus = 'image_url attachments included in this message'
   }
 
+  if (context && context.trademarkSignals) {
+    promptInput.trademarkSignals = context.trademarkSignals
+  }
+
+  if (context && Array.isArray(context.trademarkSearchTerms) && context.trademarkSearchTerms.length) {
+    promptInput.trademarkSearchTerms = context.trademarkSearchTerms
+  }
+
+  if (trademarkCandidates.length) {
+    promptInput.trademarkCandidates = trademarkCandidates.map((candidate) => ({
+      wordmark: candidate.wordmark,
+      serialNumber: candidate.serialNumber,
+      registrationNumber: candidate.registrationNumber,
+      ownerName: candidate.ownerName,
+      status: candidate.status,
+      goodsAndServices: candidate.goodsAndServices,
+      markDrawingCode: candidate.markDrawingCode,
+      designSearchCode: candidate.designSearchCode,
+      markImageUrl: candidate.markImageUrl,
+      sourceUrl: candidate.sourceUrl,
+    }))
+    promptInput.officialTrademarkImageStatus = 'USPTO candidate mark images are attached after the user uploaded images when markImageUrl is available'
+  }
+
+  if (context && Array.isArray(context.warnings) && context.warnings.length) {
+    promptInput.lookupWarnings = context.warnings
+  }
+
   return promptInput
 }
 
-function buildUserContent(payload, imageUrls) {
+function buildUserContent(payload, imageUrls, trademarkCandidates) {
   const text = JSON.stringify(payload)
 
-  if (!imageUrls.length) {
+  const userImageUrls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : []
+  const officialImageUrls = (trademarkCandidates || [])
+    .map((candidate) => candidate && candidate.markImageUrl)
+    .filter(Boolean)
+    .slice(0, 3)
+
+  if (!userImageUrls.length && !officialImageUrls.length) {
     return text
   }
 
-  return [{
+  const content = [{
     type: 'text',
     text,
-  }].concat(imageUrls.map((url) => ({
+  }]
+
+  if (userImageUrls.length) {
+    content.push({
+      type: 'text',
+      text: '用户上传的待检测图片如下：',
+    })
+  }
+  userImageUrls.forEach((url) => content.push({
     type: 'image_url',
     image_url: {
       url,
     },
-  })))
+  }))
+
+  if (officialImageUrls.length) {
+    content.push({
+      type: 'text',
+      text: 'USPTO 官方候选商标图如下，顺序对应 trademarkCandidates：',
+    })
+  }
+  officialImageUrls.forEach((url) => content.push({
+    type: 'image_url',
+    image_url: {
+      url,
+    },
+  }))
+
+  return content
 }
 
 function normalizeTaskResult(task, result, input) {
@@ -200,6 +356,73 @@ function normalizeTroAdviceResult(result, input) {
     ],
     source: 'ai-cloud-function',
   }
+}
+
+function normalizeTrademarkSignals(result) {
+  return {
+    wordMarks: normalizeStringArray(result && result.wordMarks).slice(0, 8),
+    searchTerms: normalizeStringArray(result && result.searchTerms).slice(0, 8),
+    visualElements: normalizeStringArray(result && result.visualElements).slice(0, 8),
+    colors: normalizeStringArray(result && result.colors).slice(0, 8),
+    composition: normalizeStringArray(result && result.composition).slice(0, 8),
+  }
+}
+
+function normalizeStringArray(value) {
+  if (!Array.isArray(value)) {
+    return value ? [String(value).trim()].filter(Boolean) : []
+  }
+
+  return value
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+}
+
+function getAiRuntimeConfig() {
+  const apiKey = process.env.AI_API_KEY
+  if (!apiKey) {
+    throw new Error('Missing AI_API_KEY environment variable')
+  }
+
+  return {
+    apiKey,
+    baseUrl: trimTrailingSlash(process.env.AI_BASE_URL || DEFAULT_BASE_URL),
+    model: process.env.AI_MODEL || DEFAULT_MODEL,
+  }
+}
+
+async function uploadPdfReport(pdfBuffer) {
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).slice(2, 10)
+  const fileName = `risk-report-${timestamp}-${random}.pdf`
+  const cloudPath = `risk-reports/${fileName}`
+  const tempPath = path.join(os.tmpdir(), fileName)
+
+  fs.writeFileSync(tempPath, pdfBuffer)
+
+  try {
+    const result = await cloud.uploadFile({
+      cloudPath,
+      fileContent: fs.createReadStream(tempPath),
+    })
+
+    return {
+      pdfReportFileID: result.fileID,
+      pdfReportCloudPath: cloudPath,
+    }
+  } finally {
+    try {
+      fs.unlinkSync(tempPath)
+    } catch (error) {
+      // The temp file is best-effort cleanup only.
+    }
+  }
+}
+
+function formatReportTime() {
+  const date = new Date()
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 function postJson(urlString, body, apiKey) {

@@ -206,8 +206,9 @@ function mergeModelResult(localResult, modelResult) {
   const modelScore = Number(modelResult.score)
   const score = !isNaN(modelScore) ? Math.max(localResult.score, modelScore) : localResult.score
   const level = getLevel(score)
+  const modelExtras = pickModelExtras(modelResult)
 
-  return Object.assign({}, localResult, {
+  return Object.assign({}, localResult, modelExtras, {
     score,
     level,
     modelRaw: modelResult,
@@ -215,7 +216,27 @@ function mergeModelResult(localResult, modelResult) {
     riskItems: decorateRiskItems(modelResult.riskItems || localResult.riskItems),
     suggestions: modelResult.suggestions || localResult.suggestions,
     jurisdiction: modelResult.jurisdiction || localResult.jurisdiction,
+    canPublish: typeof modelResult.canPublish === 'boolean' ? modelResult.canPublish : localResult.canPublish,
   })
+}
+
+function pickModelExtras(modelResult) {
+  const keys = [
+    'pdfReportFileID',
+    'pdfReportCloudPath',
+    'pdfReportError',
+    'trademarkCandidates',
+    'trademarkSearchTerms',
+    'trademarkSignals',
+    'usptoWarnings',
+  ]
+
+  return keys.reduce((extras, key) => {
+    if (Object.prototype.hasOwnProperty.call(modelResult, key)) {
+      extras[key] = modelResult[key]
+    }
+    return extras
+  }, {})
 }
 
 function detectRisk(payload, options) {

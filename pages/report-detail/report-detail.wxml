@@ -1,0 +1,84 @@
+<view class="page-shell">
+  <view class="page-content report-detail-page">
+    <block wx:if="{{report}}">
+      <view class="hero-panel report-hero">
+        <text class="eyebrow">{{report.type}}</text>
+        <text class="hero-title">{{report.name}}</text>
+        <text class="hero-desc">{{report.date}} · {{report.jurisdiction}}</text>
+      </view>
+
+      <view class="section">
+        <view class="card result-card">
+          <view class="result-top">
+            <view>
+              <text class="result-score">{{report.score}}</text>
+              <text class="metric-label">综合风险分</text>
+            </view>
+            <view class="result-level">
+              <text class="badge badge-{{report.level}}">{{report.levelText}}</text>
+              <text class="card-desc">{{report.source}}</text>
+            </view>
+          </view>
+          <view class="divider"></view>
+          <view class="row-between">
+            <text class="card-title">PDF报告</text>
+            <text wx:if="{{report.pdfReportFileID}}" class="badge badge-info">已生成</text>
+            <text wx:else class="badge badge-medium">未生成</text>
+          </view>
+          <view class="pdf-report-action" wx:if="{{report.pdfReportFileID}}">
+            <view class="secondary-button report-button" bindtap="viewPdfReport">
+              <block wx:if="{{pdfOpening}}">打开中...</block>
+              <block wx:else>下载/查看 PDF 报告</block>
+            </view>
+          </view>
+          <text wx:elif="{{report.pdfReportError}}" class="card-desc pdf-missing-text">{{report.pdfReportError}}</text>
+          <text wx:else class="card-desc pdf-missing-text">这条记录没有PDF文件，请重新检测或确认云函数已重新部署。</text>
+        </view>
+      </view>
+
+      <view class="section" wx:if="{{report.result.riskItems && report.result.riskItems.length}}">
+        <text class="section-title">风险点</text>
+        <view class="card">
+          <view class="risk-block" wx:for="{{report.result.riskItems}}" wx:key="title">
+            <view class="row-between">
+              <text class="risk-block-title">{{item.title}}</text>
+              <text class="badge badge-{{item.level}}">{{item.levelText || item.level}}</text>
+            </view>
+            <text class="card-desc">{{item.detail}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section" wx:if="{{report.trademarkCandidates && report.trademarkCandidates.length}}">
+        <text class="section-title">USPTO 候选商标</text>
+        <view class="card">
+          <view class="trademark-row" wx:for="{{report.trademarkCandidates}}" wx:key="serialNumber">
+            <view>
+              <text class="trademark-title">{{item.wordmark || '未命名商标'}}</text>
+              <text class="card-desc">{{item.status || '未知状态'}} · SN {{item.serialNumber || '-'}}</text>
+              <text class="card-desc">{{item.ownerName || ''}}</text>
+            </view>
+            <text class="badge badge-info">USPTO</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section" wx:if="{{report.result.suggestions && report.result.suggestions.length}}">
+        <text class="section-title">处理建议</text>
+        <view class="card">
+          <view class="suggestion-row" wx:for="{{report.result.suggestions}}" wx:key="*this">
+            <text class="suggestion-index">{{index + 1}}</text>
+            <text class="suggestion-text">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view class="section" wx:else>
+      <view class="card">
+        <text class="card-title">报告不存在</text>
+        <text class="card-desc">请从最近检测报告列表重新进入。</text>
+      </view>
+    </view>
+  </view>
+</view>

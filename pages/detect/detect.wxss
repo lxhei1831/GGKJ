@@ -210,6 +210,40 @@ page {
   color: #111827;
 }
 
+.pdf-report-action {
+  margin-top: 22rpx;
+}
+
+.report-button {
+  height: 76rpx;
+}
+
+.pdf-missing-text {
+  display: block;
+  margin-top: 16rpx;
+}
+
+.trademark-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.trademark-row:last-child {
+  border-bottom: 0;
+}
+
+.trademark-title {
+  display: block;
+  max-width: 440rpx;
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #111827;
+  word-break: break-word;
+}
+
 .suggestion-row {
   display: flex;
   align-items: flex-start;
@@ -249,8 +283,35 @@ page {
   border-bottom: 1rpx solid #eef2f6;
 }
 
+.report-history-side {
+  display: flex;
+  align-items: center;
+  margin-left: 16rpx;
+  flex: none;
+}
+
+.menu-arrow {
+  margin-left: 12rpx;
+  font-size: 36rpx;
+  color: #98a2b3;
+}
+
 .report-history-row:last-child {
   border-bottom: 0;
+}
+
+.report-list-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx 0;
+  border-top: 1rpx solid #eef2f6;
+}
+
+.report-list-text {
+  font-size: 25rpx;
+  font-weight: 800;
+  color: #2563eb;
 }
 
 .report-empty {

@@ -1,0 +1,116 @@
+page {
+  min-height: 100vh;
+}
+
+.report-detail-page {
+  padding-bottom: 72rpx;
+}
+
+.report-hero {
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(14, 165, 233, 0.1) 100%);
+}
+
+.result-card {
+  overflow: hidden;
+}
+
+.result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-score {
+  display: block;
+  font-size: 70rpx;
+  line-height: 1;
+  font-weight: 900;
+  color: #2563eb;
+}
+
+.result-level {
+  text-align: right;
+}
+
+.pdf-report-action {
+  margin-top: 22rpx;
+}
+
+.report-button {
+  height: 76rpx;
+}
+
+.pdf-missing-text {
+  display: block;
+  margin-top: 16rpx;
+}
+
+.risk-block {
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.risk-block:last-child {
+  border-bottom: 0;
+}
+
+.risk-block-title {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #111827;
+}
+
+.trademark-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #eef2f6;
+}
+
+.trademark-row:last-child {
+  border-bottom: 0;
+}
+
+.trademark-title {
+  display: block;
+  max-width: 440rpx;
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #111827;
+  word-break: break-word;
+}
+
+.suggestion-row {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 20rpx;
+}
+
+.suggestion-row:first-child {
+  margin-top: 0;
+}
+
+.suggestion-index {
+  width: 38rpx;
+  height: 38rpx;
+  line-height: 38rpx;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 21rpx;
+  font-weight: 800;
+  color: #ffffff;
+  background: #2563eb;
+  flex: none;
+}
+
+.suggestion-text {
+  margin-left: 16rpx;
+  font-size: 25rpx;
+  line-height: 1.5;
+  color: #334155;
+}

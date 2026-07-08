@@ -29,6 +29,14 @@ function getRecentReports(adapter, limit) {
   }
 }
 
+function getReportById(id, adapter) {
+  const reportId = String(id || '').trim()
+  if (!reportId) return null
+
+  return getRecentReports(adapter, MAX_REPORTS)
+    .find((report) => report && report.id === reportId) || null
+}
+
 function saveDetectionReport(payload, result, options, adapter) {
   if (!result) return null
 
@@ -47,6 +55,8 @@ function createReportRecord(payload, result, options) {
   const platform = payload.platform || '平台'
   const countryRegion = payload.countryRegion || ''
   const level = result.level || {}
+  const payloadSnapshot = cloneSerializable(payload)
+  const resultSnapshot = cloneSerializable(result)
 
   return {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -60,6 +70,20 @@ function createReportRecord(payload, result, options) {
     level: level.key || 'low',
     levelText: level.text || '低风险',
     source: result.source || 'local-rule',
+    pdfReportFileID: result.pdfReportFileID || '',
+    pdfReportCloudPath: result.pdfReportCloudPath || '',
+    pdfReportError: result.pdfReportError || '',
+    trademarkCandidates: cloneSerializable(result.trademarkCandidates || []),
+    payload: payloadSnapshot,
+    result: resultSnapshot,
+  }
+}
+
+function cloneSerializable(value) {
+  try {
+    return JSON.parse(JSON.stringify(value || {}))
+  } catch (error) {
+    return Array.isArray(value) ? [] : {}
   }
 }
 
@@ -76,6 +100,7 @@ module.exports = {
   MAX_REPORTS,
   REPORT_STORAGE_KEY,
   createReportRecord,
+  getReportById,
   getRecentReports,
   saveDetectionReport,
 }

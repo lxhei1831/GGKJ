@@ -15,6 +15,7 @@ const profileTemplate = read('pages/profile/profile.wxml')
 
 const expectedMenus = [
   { title: '我的TRO案件', path: '/pages/profile-tro/profile-tro', emptyText: '暂无TRO案件' },
+  { title: '我的检测报告', path: '/pages/profile-reports/profile-reports', emptyText: '暂无检测报告' },
   { title: '我的订单', path: '/pages/profile-orders/profile-orders', emptyText: '暂无订单' },
   { title: '消息通知', path: '/pages/profile-messages/profile-messages', emptyText: '暂无消息' },
   { title: '账号设置', path: '/pages/profile-settings/profile-settings', emptyText: '账号资料' },
@@ -23,11 +24,11 @@ const pageExplanationPhrases = [
   '后续展示字段',
   '后续展示内容',
   '展示规则',
-  '当前先展示设置结构',
+  '当前先展示设置结果',
   '账号能力准备中',
 ]
 
-assert.strictEqual(profileMenus.length, 4, 'profile function menu should contain exactly four modules')
+assert.strictEqual(profileMenus.length, 5, 'profile function menu should contain exactly five modules')
 assert(profileScript.includes('wx.navigateTo'), 'profile menu should navigate to feature pages')
 assert(profileTemplate.includes('data-path="{{item.path}}"'), 'profile menu rows should carry target page paths')
 assert(profileTemplate.includes('menu-mark'), 'profile menu should render a visual mark for each module')

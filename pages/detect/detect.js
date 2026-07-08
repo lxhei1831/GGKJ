@@ -22,6 +22,8 @@ const defaultForm = {
   batchFileName: '',
 }
 
+const DETECT_REPORT_PREVIEW_LIMIT = 3
+
 Page({
   data: {
     modeTabs: detectionModes,
@@ -38,6 +40,7 @@ Page({
     result: null,
     recentReports: [],
     loading: false,
+    pdfOpening: false,
   },
   onShow() {
     const pendingMode = wx.getStorageSync('pendingDetectMode')
@@ -49,7 +52,7 @@ Page({
   },
   loadRecentReports() {
     this.setData({
-      recentReports: getRecentReports(),
+      recentReports: getRecentReports(null, DETECT_REPORT_PREVIEW_LIMIT),
     })
   },
   selectMode(event) {
@@ -129,6 +132,7 @@ Page({
       form: Object.assign({}, defaultForm),
       result: null,
       loading: false,
+      pdfOpening: false,
     })
   },
   runDetection() {
@@ -159,7 +163,7 @@ Page({
         })
         this.setData({
           result,
-          recentReports: getRecentReports(),
+          recentReports: getRecentReports(null, DETECT_REPORT_PREVIEW_LIMIT),
           loading: false,
         })
       })
@@ -170,6 +174,64 @@ Page({
           icon: 'none',
         })
       })
+  },
+  viewPdfReport() {
+    if (this.data.pdfOpening) return
+
+    const fileID = this.data.result && this.data.result.pdfReportFileID
+    if (!fileID) {
+      wx.showToast({
+        title: '暂无PDF报告',
+        icon: 'none',
+      })
+      return
+    }
+
+    if (!wx.cloud || typeof wx.cloud.downloadFile !== 'function') {
+      wx.showToast({
+        title: '云文件下载不可用',
+        icon: 'none',
+      })
+      return
+    }
+
+    this.setData({ pdfOpening: true })
+    wx.cloud.downloadFile({
+      fileID,
+    })
+      .then((res) => this.openPdfDocument(res.tempFilePath))
+      .catch(() => {
+        wx.showToast({
+          title: 'PDF打开失败，请稍后重试',
+          icon: 'none',
+        })
+      })
+      .then(() => {
+        this.setData({ pdfOpening: false })
+      })
+  },
+  openPdfDocument(filePath) {
+    return new Promise((resolve, reject) => {
+      wx.openDocument({
+        filePath,
+        fileType: 'pdf',
+        success: resolve,
+        fail: reject,
+      })
+    })
+  },
+  openReportDetail(event) {
+    const id = event.currentTarget.dataset.id
+    if (!id) return
+
+    wx.navigateTo({
+      url: `/pages/report-detail/report-detail?id=${encodeURIComponent(id)}`,
+    })
+  },
+  openReportList() {
+    wx.navigateTo({
+      url: '/pages/profile-reports/profile-reports',
+    })
   },
   hasInput(payload) {
     return Boolean(

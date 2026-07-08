@@ -132,12 +132,31 @@
           <text wx:if="{{result.canPublish}}" class="badge badge-low">可继续复核</text>
           <text wx:else class="badge badge-high">暂缓上架</text>
         </view>
+        <view class="pdf-report-action" wx:if="{{result.pdfReportFileID}}">
+          <view class="secondary-button report-button" bindtap="viewPdfReport">
+            <block wx:if="{{pdfOpening}}">打开中...</block>
+            <block wx:else>下载/查看 PDF 报告</block>
+          </view>
+        </view>
+        <text wx:elif="{{result.pdfReportError}}" class="card-desc pdf-missing-text">{{result.pdfReportError}}</text>
+        <text wx:else class="card-desc pdf-missing-text">PDF报告未生成，请确认 aiGateway 云函数已重新部署。</text>
         <view class="risk-block" wx:for="{{result.riskItems}}" wx:key="title">
           <view class="row-between">
             <text class="risk-block-title">{{item.title}}</text>
             <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
           </view>
           <text class="card-desc">{{item.detail}}</text>
+        </view>
+      </view>
+
+      <view class="card" wx:if="{{result.trademarkCandidates && result.trademarkCandidates.length}}">
+        <text class="card-title">USPTO 候选商标</text>
+        <view class="trademark-row" wx:for="{{result.trademarkCandidates}}" wx:key="serialNumber">
+          <view>
+            <text class="trademark-title">{{item.wordmark || '未命名商标'}}</text>
+            <text class="card-desc">{{item.status || '未知状态'}} · SN {{item.serialNumber || '-'}}</text>
+          </view>
+          <text class="badge badge-info">USPTO</text>
         </view>
       </view>
 
@@ -159,12 +178,19 @@
       </view>
       <view class="card report-history-card">
         <block wx:if="{{recentReports.length}}">
-          <view class="report-history-row" wx:for="{{recentReports}}" wx:key="id">
+          <view class="report-history-row" wx:for="{{recentReports}}" wx:key="id" bindtap="openReportDetail" data-id="{{item.id}}">
             <view>
               <text class="card-title">{{item.name}}</text>
               <text class="card-desc">{{item.date}} · {{item.jurisdiction}} · 风险分 {{item.score}}</text>
             </view>
-            <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
+            <view class="report-history-side">
+              <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
+              <text class="menu-arrow">›</text>
+            </view>
+          </view>
+          <view class="report-list-action" bindtap="openReportList">
+            <text class="report-list-text">查看全部检测报告</text>
+            <text class="menu-arrow">›</text>
           </view>
         </block>
         <view class="report-empty" wx:else>

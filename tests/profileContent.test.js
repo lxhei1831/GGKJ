@@ -11,6 +11,11 @@ function read(file) {
 const profileTemplate = read('pages/profile/profile.wxml')
 const { profileMenus } = require('../data/mock')
 
-assert(!profileMenus.some((item) => item.title === '我的风险报告'), 'profile function menu should not include duplicated risk report entry')
-assert(!profileMenus.some((item) => item.title === '我的检测记录'), 'profile function menu should not include duplicated detection record entry')
-assert(profileTemplate.includes('最近检测报告'), 'profile page should keep the recent detection reports section')
+const troIndex = profileMenus.findIndex((item) => item.title === '我的TRO案件')
+const reportIndex = profileMenus.findIndex((item) => item.title === '我的检测报告')
+
+assert(reportIndex > -1, 'profile function menu should include my detection reports')
+assert.strictEqual(reportIndex, troIndex + 1, 'my detection reports should appear directly below my TRO cases')
+assert.strictEqual(profileMenus[reportIndex].path, '/pages/profile-reports/profile-reports', 'my detection reports should open the report list page')
+assert(!profileTemplate.includes('<text class="section-title">最近检测报告</text>'), 'profile page should not render a standalone recent reports section')
+assert(!profileTemplate.includes('records.length'), 'profile page should not keep report rows outside the function menu')

@@ -7,18 +7,18 @@ const {
 
 Page({
   data: {
-    menus: profileMenus,
+    menus: buildProfileMenus([]),
     summary: [
       { label: '本月检测', value: '42' },
       { label: '剩余额度', value: '158' },
       { label: '风险报告', value: '12' },
       { label: 'TRO案件', value: '2' },
     ],
-    records: [],
   },
   onShow() {
+    const reports = getRecentReports()
     this.setData({
-      records: getRecentReports(),
+      menus: buildProfileMenus(reports),
     })
   },
   openMenu(event) {
@@ -43,3 +43,16 @@ Page({
     })
   },
 })
+
+function buildProfileMenus(reports) {
+  const count = Array.isArray(reports) ? reports.length : 0
+
+  return profileMenus.map((item) => {
+    if (item.key !== 'reports') return item
+
+    return Object.assign({}, item, {
+      status: count ? `最近 ${count} 条` : '暂无记录',
+      statusKey: count ? 'info' : 'low',
+    })
+  })
+}
