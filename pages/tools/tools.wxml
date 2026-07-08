@@ -22,10 +22,10 @@
     <view class="section">
       <view class="card assistant-card">
         <view>
-          <text class="card-title">英文申诉信助手</text>
-          <text class="card-desc">后续可接入大模型，根据平台通知、证据材料和目标语气生成英文申诉邮件。</text>
+          <text class="card-title">港港跨境 AI 助手</text>
+          <text class="card-desc">把平台通知、申诉材料、商品图和证据文件发给 AI，直接进入对话处理。</text>
         </view>
-        <view class="primary-button assistant-button" bindtap="openAppealAssistant">开始撰写</view>
+        <view class="primary-button assistant-button" bindtap="openAiAssistant">开始聊天</view>
       </view>
     </view>
   </view>

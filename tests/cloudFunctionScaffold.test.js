@@ -25,6 +25,8 @@ assert(functionScript.includes('/chat/completions'), 'cloud function should call
 assert(functionScript.includes('exports.main'), 'cloud function should expose a main handler')
 assert(functionScript.includes('tro_advice'), 'cloud function should support the TRO advice task')
 assert(functionScript.includes('risk_detect'), 'cloud function should support the risk detection task')
+assert(functionScript.includes('general_chat'), 'cloud function should support the general AI chat task')
+assert(functionScript.includes('港港跨境 AI 助手'), 'cloud function should include the GGKJ AI assistant prompt')
 assert(functionScript.includes('image_url'), 'cloud function should support vision image inputs')
 assert(functionScript.includes('searchUsptoTrademarks'), 'cloud function should enrich US detections with USPTO trademark candidates')
 assert(functionScript.includes('generatePdfReportBuffer'), 'cloud function should generate PDF reports')

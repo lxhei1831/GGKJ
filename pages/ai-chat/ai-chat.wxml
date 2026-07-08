@@ -1,0 +1,70 @@
+<view class="page-shell">
+  <view class="ai-chat-page">
+    <view class="chat-header">
+      <text class="eyebrow">港港跨境</text>
+      <text class="chat-title">AI 助手</text>
+      <text class="chat-desc">跨境维权、申诉材料和平台通知对话</text>
+    </view>
+
+    <scroll-view
+      class="chat-messages"
+      scroll-y
+      scroll-into-view="{{scrollIntoView}}"
+      scroll-with-animation
+    >
+      <view
+        wx:for="{{messages}}"
+        wx:key="id"
+        id="{{item.anchorId}}"
+        class="message-row {{item.role === 'user' ? 'message-user' : 'message-assistant'}}"
+      >
+        <view class="message-bubble">
+          <text class="message-text">{{item.content}}</text>
+          <view class="message-attachments" wx:if="{{item.attachments.length}}">
+            <view class="message-attachment" wx:for="{{item.attachments}}" wx:for-item="file" wx:key="name">
+              <text class="attachment-type">{{file.type === 'image' ? '图' : '文'}}</text>
+              <text class="attachment-name">{{file.name}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="message-row message-assistant" wx:if="{{sending}}">
+        <view class="message-bubble">
+          <text class="message-text">正在生成回复...</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="chat-composer">
+      <view class="pending-attachments" wx:if="{{pendingAttachments.length}}">
+        <view
+          class="pending-chip"
+          wx:for="{{pendingAttachments}}"
+          wx:key="name"
+          data-index="{{index}}"
+          bindtap="removeAttachment"
+        >
+          <text class="pending-type">{{item.type === 'image' ? '图' : '文'}}</text>
+          <text class="pending-name">{{item.name}}</text>
+          <text class="pending-remove">×</text>
+        </view>
+      </view>
+
+      <view class="composer-row">
+        <view class="composer-input-wrap">
+          <textarea
+            class="composer-input"
+            auto-height
+            maxlength="-1"
+            placeholder="输入消息"
+            value="{{inputText}}"
+            bindinput="bindInput"
+            disabled="{{sending}}"
+          />
+        </view>
+        <view class="composer-plus {{sending ? 'composer-action-disabled' : ''}}" bindtap="openAttachmentMenu">+</view>
+        <view class="composer-send {{sending ? 'composer-action-disabled' : ''}}" bindtap="sendMessage">发送</view>
+      </view>
+    </view>
+  </view>
+</view>

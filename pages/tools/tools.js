@@ -14,10 +14,9 @@ Page({
       url: `/pages/appeal-template/appeal-template?platform=${encodeURIComponent(platform)}`,
     })
   },
-  openAppealAssistant() {
-    wx.showToast({
-      title: '申诉信AI接口待接入',
-      icon: 'none',
+  openAiAssistant() {
+    wx.navigateTo({
+      url: '/pages/ai-chat/ai-chat',
     })
   },
 })

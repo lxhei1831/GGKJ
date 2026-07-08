@@ -162,6 +162,21 @@ function buildMessages(task, input, context) {
 }
 
 function getTaskConfig(task) {
+  if (task === 'general_chat') {
+    return {
+      systemPrompt: [
+        '你是港港跨境 AI 助手，面向跨境电商卖家、知识产权风险、平台申诉、TRO应急和合规材料整理场景。',
+        '请像正常聊天助手一样回答用户，但要优先围绕跨境电商、平台规则、申诉证据、侵权初筛和维权材料给出可执行建议。',
+        '如果消息附带图片，请直接检查图片中的Logo、商标、IP角色、肖像、图案、包装、外观设计、平台通知截图和证据要点。',
+        '如果输入中只有文件名或文件元数据，请明确说明你只能基于文件名和用户文字判断，不能假装已经读取文件正文。',
+        '涉及法律风险时要谨慎表述，说明这是初步分析，不能替代律师正式意见。',
+        '只返回一个JSON对象，不要返回Markdown、代码块或额外解释。',
+        'JSON字段必须包含: reply, quickReplies。',
+        'reply为中文字符串；quickReplies为0到4条中文短句数组，用于建议用户下一步可以继续问什么。',
+      ].join('\n'),
+    }
+  }
+
   if (task === 'tro_advice') {
     return {
       systemPrompt: [
@@ -307,6 +322,10 @@ function normalizeTaskResult(task, result, input) {
     return normalizeTroAdviceResult(result, input)
   }
 
+  if (task === 'general_chat') {
+    return normalizeChatResult(result)
+  }
+
   return normalizeRiskDetectionResult(result, input)
 }
 
@@ -354,6 +373,18 @@ function normalizeTroAdviceResult(result, input) {
       '暂停新增涉案商品销售，避免扩大潜在损失。',
       '尽快让律师复核案件号、原告主体、涉案链接和和解空间。',
     ],
+    source: 'ai-cloud-function',
+  }
+}
+
+function normalizeChatResult(result) {
+  const quickReplies = Array.isArray(result.quickReplies)
+    ? result.quickReplies.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 4)
+    : []
+
+  return {
+    reply: String(result.reply || result.answer || result.content || result.message || '我暂时没有生成有效回复，请换一种说法再发一次。').trim(),
+    quickReplies,
     source: 'ai-cloud-function',
   }
 }
@@ -527,6 +558,7 @@ function normalizeRiskItem(item) {
 function normalizeTask(task) {
   if (task === 'cross_border_ip_risk_detection' || task === 'risk_detect') return 'risk_detect'
   if (task === 'tro_advice') return 'tro_advice'
+  if (task === 'general_chat' || task === 'ai_chat') return 'general_chat'
   return 'risk_detect'
 }
 
