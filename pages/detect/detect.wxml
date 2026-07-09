@@ -3,7 +3,7 @@
     <view class="hero-panel detect-hero">
       <text class="eyebrow">AI风险评估中心</text>
       <text class="hero-title">按市场规则精细化检测</text>
-      <text class="hero-desc">选择平台和目标国家/地区后，再上传图片、表格或输入Listing内容，检测结果会按对应市场风险偏好输出。</text>
+      <text class="hero-desc">选择平台和目标国家/地区后，再上传图片、表格或输入Listing内容。检测完成后，请在最近检测报告中打开PDF结果。</text>
     </view>
 
     <view class="section">
@@ -113,79 +113,24 @@
       </view>
     </view>
 
-    <view class="section" wx:if="{{result}}">
-      <text class="section-title">检测报告</text>
-      <view class="card result-card">
-        <view class="result-top">
-          <view>
-            <text class="result-score">{{result.score}}</text>
-            <text class="metric-label">综合风险分</text>
-          </view>
-          <view class="result-level">
-            <text class="badge badge-{{result.level.key}}">{{result.level.text}}</text>
-            <text class="card-desc">{{result.jurisdiction}} · {{result.generatedAt}}</text>
-          </view>
-        </view>
-        <view class="divider"></view>
-        <view class="row-between">
-          <text class="card-title">是否建议上架</text>
-          <text wx:if="{{result.canPublish}}" class="badge badge-low">可继续复核</text>
-          <text wx:else class="badge badge-high">暂缓上架</text>
-        </view>
-        <view class="pdf-report-action" wx:if="{{result.pdfReportFileID}}">
-          <view class="secondary-button report-button" bindtap="viewPdfReport">
-            <block wx:if="{{pdfOpening}}">打开中...</block>
-            <block wx:else>下载/查看 PDF 报告</block>
-          </view>
-        </view>
-        <text wx:elif="{{result.pdfReportError}}" class="card-desc pdf-missing-text">{{result.pdfReportError}}</text>
-        <text wx:else class="card-desc pdf-missing-text">PDF报告未生成，请确认 aiGateway 云函数已重新部署。</text>
-        <view class="risk-block" wx:for="{{result.riskItems}}" wx:key="title">
-          <view class="row-between">
-            <text class="risk-block-title">{{item.title}}</text>
-            <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
-          </view>
-          <text class="card-desc">{{item.detail}}</text>
-        </view>
-      </view>
-
-      <view class="card" wx:if="{{result.trademarkCandidates && result.trademarkCandidates.length}}">
-        <text class="card-title">USPTO 候选商标</text>
-        <view class="trademark-row" wx:for="{{result.trademarkCandidates}}" wx:key="serialNumber">
-          <view>
-            <text class="trademark-title">{{item.wordmark || '未命名商标'}}</text>
-            <text class="card-desc">{{item.status || '未知状态'}} · SN {{item.serialNumber || '-'}}</text>
-          </view>
-          <text class="badge badge-info">USPTO</text>
-        </view>
-      </view>
-
-      <view class="card">
-        <text class="card-title">处理建议</text>
-        <view class="suggestion-row" wx:for="{{result.suggestions}}" wx:key="*this">
-          <text class="suggestion-index">{{index + 1}}</text>
-          <text class="suggestion-text">{{item}}</text>
-        </view>
-      </view>
-    </view>
-
     <view class="section">
       <view class="section-head">
         <view>
           <text class="section-title">最近检测报告</text>
-          <text class="section-subtitle">风险分、市场和生成时间集中查看。</text>
+          <text class="section-subtitle">检测完成后，PDF结果会在这里生成并打开。</text>
         </view>
       </view>
       <view class="card report-history-card">
         <block wx:if="{{recentReports.length}}">
           <view class="report-history-row" wx:for="{{recentReports}}" wx:key="id" bindtap="openReportDetail" data-id="{{item.id}}">
-            <view>
+            <view class="report-history-main">
               <text class="card-title">{{item.name}}</text>
-              <text class="card-desc">{{item.date}} · {{item.jurisdiction}} · 风险分 {{item.score}}</text>
+              <text class="card-desc">{{item.date}} · {{item.jurisdiction}}</text>
             </view>
             <view class="report-history-side">
-              <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
-              <text class="menu-arrow">›</text>
+              <view wx:if="{{item.pdfReportFileID}}" class="report-pdf-button" catchtap="viewReportPdf" data-file-id="{{item.pdfReportFileID}}">查看PDF</view>
+              <view wx:else class="report-pdf-missing">PDF未生成</view>
+              <view class="report-delete-button" catchtap="confirmDeleteReport" data-id="{{item.id}}">删除</view>
             </view>
           </view>
           <view class="report-list-action" bindtap="openReportList">

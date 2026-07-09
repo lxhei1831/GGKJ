@@ -206,7 +206,7 @@ function mergeModelResult(localResult, modelResult) {
   const modelScore = Number(modelResult.score)
   const score = !isNaN(modelScore) ? Math.max(localResult.score, modelScore) : localResult.score
   const level = getLevel(score)
-  const modelExtras = pickModelExtras(modelResult)
+  const modelExtras = ensurePdfReportState(pickModelExtras(modelResult))
 
   return Object.assign({}, localResult, modelExtras, {
     score,
@@ -228,6 +228,7 @@ function pickModelExtras(modelResult) {
     'trademarkCandidates',
     'trademarkSearchTerms',
     'trademarkSignals',
+    'visualFindings',
     'usptoWarnings',
   ]
 
@@ -239,6 +240,16 @@ function pickModelExtras(modelResult) {
   }, {})
 }
 
+function ensurePdfReportState(modelExtras) {
+  if (modelExtras.pdfReportFileID || modelExtras.pdfReportError) {
+    return modelExtras
+  }
+
+  return Object.assign({}, modelExtras, {
+    pdfReportError: 'PDF报告未生成：远程检测已完成，但 aiGateway 未返回 pdfReportFileID。请重新部署包含PDF生成功能的 aiGateway 云函数，并检查云函数日志。',
+  })
+}
+
 function detectRisk(payload, options) {
   const localResult = runLocalDetection(payload)
 
@@ -248,13 +259,16 @@ function detectRisk(payload, options) {
 
   return callModelDetection(payload, options)
     .then((modelResult) => mergeModelResult(localResult, modelResult))
-    .catch(() => markLocalDetectionFallback(localResult))
+    .catch((error) => markLocalDetectionFallback(localResult, error))
 }
 
-function markLocalDetectionFallback(localResult) {
+function markLocalDetectionFallback(localResult, error) {
+  const reason = error && error.message ? error.message : 'unknown error'
+
   return Object.assign({}, localResult, {
     modelFallback: true,
     source: 'local-rule-fallback',
+    pdfReportError: `PDF报告未生成：远程AI检测或云函数调用失败（${reason}）。请确认 aiGateway 已部署、AI_API_KEY 已配置，并查看云函数日志。`,
     suggestions: markFirstListItem(localResult.suggestions, '当前使用本地规则生成检测建议。'),
   })
 }

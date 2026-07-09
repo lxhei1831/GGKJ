@@ -3,6 +3,30 @@ const https = require('https')
 const USPTO_SEARCH_URL = 'https://tmsearch.uspto.gov/prod-v1-0-0/tmsearch'
 const DEFAULT_LIMIT = 6
 const DEFAULT_TIMEOUT_MS = 12000
+const TRADEMARK_IMAGE_SOURCE_LABEL = 'USPTO/TSDR official record image'
+const GENERIC_PRODUCT_WORDS = new Set([
+  'logo',
+  'bottle',
+  'cup',
+  'mug',
+  'shirt',
+  'tshirt',
+  't-shirt',
+  'shoe',
+  'shoes',
+  'phone',
+  'case',
+  'cover',
+  'holder',
+  'bag',
+  'toy',
+  'travel',
+  'running',
+  'product',
+  'style',
+  'badge',
+  'label',
+])
 
 function shouldSearchUspto(input) {
   const countryRegion = String(input && input.countryRegion || '').toLowerCase()
@@ -15,10 +39,15 @@ function shouldSearchUspto(input) {
 function buildTrademarkSearchTerms(input) {
   const source = input || {}
   const phrases = []
+  const explicitMarks = []
 
-  addMany(phrases, source.extractedMarks)
-  addMany(phrases, source.trademarkSignals && source.trademarkSignals.wordMarks)
-  addMany(phrases, source.trademarkSignals && source.trademarkSignals.searchTerms)
+  addMany(explicitMarks, source.extractedMarks)
+  addMany(explicitMarks, source.trademarkSignals && source.trademarkSignals.wordMarks)
+  addMany(explicitMarks, source.trademarkSignals && source.trademarkSignals.searchTerms)
+  addMany(phrases, explicitMarks)
+  if (!explicitMarks.length) {
+    addMany(phrases, extractBrandLikeTitlePhrases(source.productTitle))
+  }
   addPhrase(phrases, source.productTitle)
   addMany(phrases, splitLoosePhrases(source.keywordText))
   addMany(phrases, splitLoosePhrases(source.copyText))
@@ -81,9 +110,9 @@ async function searchUsptoTrademarks(input, options) {
 
     return {
       terms,
-      candidates: dedupeCandidates(responses.flatMap((response) => (
+      candidates: rankTrademarkCandidates(dedupeCandidates(responses.flatMap((response) => (
         normalizeTrademarkCandidates(response, limit)
-      ))).slice(0, limit),
+      ))), terms).slice(0, limit),
       warnings,
     }
   } catch (error) {
@@ -115,6 +144,15 @@ function normalizeTrademarkCandidates(response, limit) {
       splitCommaList(source.designCode)
     )
 
+    const markImageUrl = serialNumber ? buildTsdrPublicImageUrl(serialNumber) : ''
+    const markImageSources = markImageUrl
+      ? [{
+          label: TRADEMARK_IMAGE_SOURCE_LABEL,
+          trust: 'official-public',
+          url: markImageUrl,
+        }]
+      : []
+
     return {
       wordmark: firstValue(source.wordmark || source.markName),
       serialNumber,
@@ -125,10 +163,73 @@ function normalizeTrademarkCandidates(response, limit) {
       markDrawingCode: String(firstValue(source.markDrawingCode || source.drawingCode) || ''),
       designSearchCode,
       score: typeof hit.score === 'number' ? hit.score : hit._score,
-      markImageUrl: serialNumber ? `https://tsdr.uspto.gov/img/${encodeURIComponent(serialNumber)}/large` : '',
+      markImageUrl,
+      markImageSourceLabel: markImageUrl ? TRADEMARK_IMAGE_SOURCE_LABEL : '',
+      markImageSourceTrust: markImageUrl ? 'official-public' : '',
+      markImageSources,
       sourceUrl: serialNumber ? buildTsdrSourceUrl(serialNumber) : '',
     }
   }).filter((candidate) => candidate.wordmark || candidate.serialNumber)
+}
+
+function rankTrademarkCandidates(candidates, terms) {
+  const searchTerms = uniquePhrases(terms || [])
+  return (candidates || []).slice().sort((left, right) => (
+    scoreCandidate(right, searchTerms) - scoreCandidate(left, searchTerms)
+  ))
+}
+
+function scoreCandidate(candidate, terms) {
+  const status = String(candidate.status || '').toUpperCase()
+  const wordmark = String(candidate.wordmark || '')
+  const goods = String(candidate.goodsAndServices || '')
+  const drawingCode = String(candidate.markDrawingCode || '')
+  const score = Number(candidate.score) || 0
+
+  let rank = 0
+  if (/REGISTERED|LIVE|ACTIVE|PUBLISHED|PENDING/.test(status)) rank += 45
+  if (/ABANDONED|CANCELLED|DEAD|EXPIRED/.test(status)) rank -= 35
+  rank += bestWordmarkMatchScore(wordmark, terms)
+  if (Array.isArray(candidate.designSearchCode) && candidate.designSearchCode.length) rank += 12
+  if (drawingCode && drawingCode !== '4') rank += 8
+  rank += goodsMatchScore(goods, terms)
+  rank += Math.min(12, Math.max(0, score / 12))
+
+  return rank
+}
+
+function bestWordmarkMatchScore(wordmark, terms) {
+  const mark = normalizeForMatch(wordmark)
+  if (!mark) return 0
+
+  return Math.max(0, ...terms.map((term) => {
+    const query = normalizeForMatch(term)
+    if (!query) return 0
+    if (mark === query) return 170
+    if (mark.startsWith(`${query} `)) return 65
+    if (mark.includes(` ${query} `) || mark.endsWith(` ${query}`)) return 36
+    if (query.includes(mark)) {
+      return mark.length > 4 ? 22 : 8
+    }
+    if (mark.includes(query)) {
+      return mark.length > 4 && query.length > 4 ? 34 : 12
+    }
+
+    const markTokens = tokenizeForMatch(mark)
+    const queryTokens = tokenizeForMatch(query).filter((token) => !GENERIC_PRODUCT_WORDS.has(token))
+    if (!queryTokens.length) return 0
+    const overlap = queryTokens.filter((token) => markTokens.includes(token)).length
+    return Math.round((overlap / queryTokens.length) * 30)
+  }))
+}
+
+function goodsMatchScore(goods, terms) {
+  const text = normalizeForMatch(goods)
+  if (!text) return 0
+  const tokens = terms.flatMap((term) => tokenizeForMatch(term))
+    .filter((token) => token.length > 2 && !GENERIC_PRODUCT_WORDS.has(token))
+  const overlap = uniquePhrases(tokens).filter((token) => text.includes(token)).length
+  return Math.min(10, overlap * 3)
 }
 
 function postUsptoSearch(payload, options) {
@@ -183,6 +284,29 @@ function buildTsdrSourceUrl(serialNumber) {
   return `https://tsdr.uspto.gov/#caseNumber=${encodeURIComponent(serialNumber)}&caseSearchType=US_APPLICATION&caseType=DEFAULT&searchType=statusSearch`
 }
 
+function buildTsdrPublicImageUrl(serialNumber) {
+  return `https://tsdr.uspto.gov/img/${encodeURIComponent(serialNumber)}/large`
+}
+
+function extractBrandLikeTitlePhrases(value) {
+  const words = cleanPhrase(value)
+    .split(/\s+/)
+    .filter(Boolean)
+  const brandWords = []
+
+  for (const word of words) {
+    const normalized = normalizeForMatch(word)
+    if (!normalized || GENERIC_PRODUCT_WORDS.has(normalized)) break
+    brandWords.push(word)
+    if (brandWords.length >= 3) break
+  }
+
+  const phrases = []
+  if (brandWords.length >= 2) phrases.push(brandWords.slice(0, 2).join(' '))
+  if (brandWords.length >= 1) phrases.push(brandWords[0])
+  return phrases
+}
+
 function addMany(target, values) {
   normalizeArray(values).forEach((value) => addPhrase(target, value))
 }
@@ -221,6 +345,20 @@ function cleanPhrase(value) {
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 80)
+}
+
+function normalizeForMatch(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function tokenizeForMatch(value) {
+  return normalizeForMatch(value)
+    .split(/\s+/)
+    .filter(Boolean)
 }
 
 function normalizeArray(value) {
@@ -270,4 +408,5 @@ module.exports = {
   buildUsptoSearchPayload,
   searchUsptoTrademarks,
   normalizeTrademarkCandidates,
+  rankTrademarkCandidates,
 }

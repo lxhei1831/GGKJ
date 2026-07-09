@@ -6,30 +6,56 @@ const PDFDocument = require('pdfkit')
 
 const DEFAULT_FONT_PATH = path.join(__dirname, 'assets', 'fonts', 'NotoSansSC-VF.ttf')
 const FALLBACK_FONT_PATH = 'C:/Windows/Fonts/NotoSansSC-VF.ttf'
+const WATERMARK_PATH = path.join(__dirname, 'assets', 'watermark.png')
+
+const REPORT_SECTION_TITLES = [
+  '报告结论',
+  '图片对比与疑似侵权标注',
+  '侵权风险分析与整改建议',
+  '证据清单与复核路径',
+]
+
+const TYPOGRAPHY = {
+  bodyColor: '#111827',
+  mutedColor: '#334155',
+  bodyStrokeWidth: 0.08,
+  titleStrokeWidth: 0.11,
+}
 
 const COLORS = {
-  ink: '#111827',
-  muted: '#64748b',
-  soft: '#f8fafc',
-  line: '#dbe3ef',
-  blue: '#1d4ed8',
-  blueSoft: '#e8f0ff',
-  red: '#dc2626',
+  ink: '#0f172a',
+  body: TYPOGRAPHY.bodyColor,
+  muted: TYPOGRAPHY.mutedColor,
+  faint: '#f8fafc',
+  line: '#d8e0ec',
+  blue: '#1557b0',
+  blueSoft: '#eaf2ff',
+  red: '#c81e1e',
   redSoft: '#fee2e2',
-  amber: '#b45309',
+  amber: '#a16207',
   amberSoft: '#fef3c7',
   green: '#047857',
   greenSoft: '#d1fae5',
+  white: '#ffffff',
 }
 
+const PAGE = {
+  margin: 44,
+  contentWidth: 507,
+  bottom: 770,
+}
+const MAX_IMAGE_BYTES = 6 * 1024 * 1024
+
 async function generatePdfReportBuffer(report, options) {
-  const config = options || {}
+  const config = buildRenderConfig(options)
   const doc = new PDFDocument({
+    autoFirstPage: false,
     size: 'A4',
-    margin: 42,
+    margin: PAGE.margin,
+    bufferPages: false,
     info: {
-      Title: 'Professional IP/TRO Risk Screening Report',
-      Author: 'GGKJ',
+      Title: 'GGKJ Professional IP Risk Screening Report',
+      Author: '港港跨境',
       Creator: 'aiGateway',
     },
   })
@@ -37,18 +63,17 @@ async function generatePdfReportBuffer(report, options) {
 
   doc.on('data', (chunk) => chunks.push(chunk))
 
-  const fontPath = pickFontPath(config.fontPath)
-  if (fontPath) {
-    doc.registerFont('body', fontPath)
-    doc.registerFont('bold', fontPath)
-    doc.font('body')
+  if (config.fontPath) {
+    doc.registerFont('body', config.fontPath)
+    doc.registerFont('bold', config.fontPath)
+  } else {
+    installBuiltinFontFallback(doc)
   }
 
-  renderCover(doc, report)
-  await renderImageComparison(doc, report, config)
-  renderTrademarkCandidates(doc, report)
-  renderRiskAnalysis(doc, report)
-  renderEvidenceChecklist(doc)
+  renderConclusionSection(doc, report, config)
+  await renderVisualEvidenceSection(doc, report, config)
+  renderRiskActionSection(doc, report, config)
+  renderEvidenceSection(doc, report, config)
 
   doc.end()
 
@@ -58,160 +83,170 @@ async function generatePdfReportBuffer(report, options) {
   })
 }
 
-function renderCover(doc, report) {
+function buildRenderConfig(options) {
+  const config = options || {}
+  const watermarkPath = config.watermarkPath || WATERMARK_PATH
+
+  return {
+    fetchImages: config.fetchImages !== false,
+    fontPath: pickFontPath(config.fontPath),
+    watermarkPath,
+    watermarkBuffer: readOptionalFile(watermarkPath),
+  }
+}
+
+function renderConclusionSection(doc, report, config) {
+  addSectionPage(doc, config, REPORT_SECTION_TITLES[0], 'Executive conclusion')
+
   const input = report.input || {}
   const result = report.result || {}
+  const score = clampScore(result.score)
   const level = getRiskLevel(result)
-  const score = Number(result.score || 0)
 
-  drawCoverHeader(doc)
+  drawHeroBand(doc, level, score)
 
-  doc.font('bold').fontSize(22).fillColor(COLORS.ink)
-    .text('专业侵权风险初筛报告', 42, 138, { width: 330 })
-  doc.font('body').fontSize(10).fillColor(COLORS.muted)
-    .text('Professional IP/TRO Risk Screening Report', 42, 166, { width: 330 })
+  doc.font('bold').fontSize(20).fillColor(COLORS.ink)
+  drawFauxBoldText(doc, '专业侵权风险初筛报告', 44, 124, {
+    width: 330,
+    fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth,
+  })
+  doc.font('body').fontSize(11).fillColor(COLORS.muted)
+  drawFauxBoldText(doc, 'Professional IP/TRO Risk Screening Report', 44, 154, {
+    width: 330,
+    fauxBoldStrokeWidth: TYPOGRAPHY.bodyStrokeWidth,
+  })
 
-  drawScoreCard(doc, 402, 124, 150, 96, score, level)
-
-  drawInfoGrid(doc, 42, 242, [
-    ['检测对象', input.productTitle || input.productUrl || input.copyText || '用户上传商标/商品素材'],
-    ['平台 / 市场', `${input.platform || '未填写'} / ${input.countryRegion || '未填写'}`],
-    ['检测模式', formatMode(input.mode || 'risk_detect')],
-    ['生成时间', report.generatedAt || new Date().toISOString()],
-    ['报告来源', result.source || 'AI + 公开商标检索 + 本地规则'],
-    ['初筛结论', result.canPublish ? '可继续复核后上架' : '建议暂缓上架并先处理风险点'],
+  drawInfoGrid(doc, 44, 218, [
+    ['检测对象', input.productTitle || input.productUrl || input.copyText || '用户上传素材'],
+    ['平台/市场', `${input.platform || '未填写'} / ${input.countryRegion || '未填写'}`],
+    ['检测类型', formatMode(input.mode || 'risk_detect')],
+    ['生成时间', report.generatedAt || formatNow()],
+    ['报告来源', formatReportSource(result.source)],
   ])
 
-  sectionTitle(doc, '专业结论摘要', 42, 430)
-  const summary = buildExecutiveSummary(report)
-  drawBulletPanel(doc, 42, 462, 510, summary, {
+  doc.y = 418
+  drawSectionLabel(doc, config, '结论摘要', REPORT_SECTION_TITLES[0], 'Executive conclusion continued')
+  drawReadableList(doc, buildExecutiveSummary(report), {
+    pageConfig: config,
+    pageTitle: REPORT_SECTION_TITLES[0],
+    pageSubtitle: 'Executive conclusion continued',
     markerColor: level.color,
-    title: '核心判断',
+    itemGap: 11,
   })
 
-  sectionTitle(doc, '报告使用边界', 42, 650)
-  doc.font('body').fontSize(9).fillColor(COLORS.muted)
-    .text(
-      '本报告用于跨境电商上架前风险初筛、证据整理和律师复核准备。报告不构成法律意见，也不等同于法院、平台或权利人的最终判断。高风险结果建议交由知识产权律师结合权利状态、商品类别、实际使用方式和平台规则复核。',
-      42,
-      680,
-      { width: 510, lineGap: 5 }
-    )
+  ensureSpace(doc, config, 122, REPORT_SECTION_TITLES[0], 'Executive conclusion continued')
+  drawCallout(doc, config, {
+    title: '报告边界',
+    text: '本报告用于跨境电商上架前风险初筛、素材整改和律师复核准备。报告不构成正式法律意见，也不等同于平台、法院或权利人的最终判断。高风险结果建议由知识产权律师结合权利状态、商品类别、实际使用方式和平台规则复核。',
+    level: 'info',
+  })
 
-  drawFooter(doc, 'Confidential - GGKJ Risk Screening')
+  drawFooter(doc, 'Confidential - GGKJ professional screening')
 }
 
-async function renderImageComparison(doc, report, config) {
-  doc.addPage()
-  pageHeader(doc, '图片风险标注与权利图对比', 'Visual Evidence Board')
+async function renderVisualEvidenceSection(doc, report, config) {
+  addSectionPage(doc, config, REPORT_SECTION_TITLES[1], 'Visual comparison and suspected infringement markups')
 
   const userImageUrl = first(report.imageUrls)
-  const candidate = first(report.trademarkCandidates)
-  const officialImageUrl = candidate && candidate.markImageUrl
+  const candidate = first(report.trademarkCandidates) || {}
   const findings = buildVisualEvidenceFindings(report)
-  const userImage = config.fetchImages === false ? null : await fetchImageBuffer(userImageUrl).catch(() => null)
-  const officialImage = config.fetchImages === false ? null : await fetchImageBuffer(officialImageUrl).catch(() => null)
+  const userImage = config.fetchImages ? await fetchImageBuffer(userImageUrl).catch(() => null) : null
+  const officialImageResult = config.fetchImages ? await resolveCandidateImage(candidate).catch(() => null) : null
+  const officialImage = officialImageResult && officialImageResult.buffer
+  const officialImageUrl = officialImageResult && officialImageResult.source
+    ? officialImageResult.source.url
+    : candidate.markImageUrl
 
-  drawRiskNote(doc, 42, 94, '标注说明', '红色编号框为系统根据模型识别线索、USPTO候选商标和风险项生成的疑似关注区域。标注用于辅助复核，不代表最终侵权认定。')
-
-  const top = 154
-  const boxWidth = 245
-  const boxHeight = 220
-  drawImageBox(doc, 42, top, boxWidth, boxHeight, '用户上传图 - 疑似风险区域', userImage, userImageUrl, findings, 'userRegion')
-  drawImageBox(doc, 307, top, boxWidth, boxHeight, '候选权利图 - 对比参照', officialImage, officialImageUrl, findings, 'officialRegion')
-
-  doc.y = top + boxHeight + 24
-  sectionSubtitle(doc, '编号证据说明')
-  findings.forEach((finding) => {
-    drawFindingRow(doc, finding)
+  drawCallout(doc, config, {
+    title: '阅读说明',
+    text: '红色编号框为系统根据上传图片、模型识别线索、候选商标数据和风险项生成的重点复核区域。标注用于定位问题素材，不代表已经形成最终侵权认定。',
+    level: 'info',
   })
 
-  ensurePageSpace(doc, 170, '相似性评估矩阵', 'Similarity Matrix Continued')
-  sectionSubtitle(doc, '相似性评估矩阵')
-  drawSimilarityMatrix(doc, buildSimilarityMatrix(report))
-
-  drawFooter(doc, 'Visual comparison uses AI extraction + USPTO candidate data')
-}
-
-function renderTrademarkCandidates(doc, report) {
-  doc.addPage()
-  pageHeader(doc, '权威候选商标检索', 'USPTO Candidate Review')
-
-  const candidates = report.trademarkCandidates || []
-  if (!candidates.length) {
-    drawRiskNote(doc, 42, 112, '检索结果', '当前未获取到可展示的 USPTO 候选商标。若检测对象面向美国市场，建议补充更清晰的商标词、图案说明或商品类目后重新检测。')
-    drawFooter(doc, 'USPTO candidate section')
-    return
-  }
-
-  candidates.slice(0, 6).forEach((candidate, index) => {
-    ensurePageSpace(doc, 118)
-    drawCandidateCard(doc, candidate, index)
+  const imageTop = doc.y + 6
+  drawImageBox(doc, 44, imageTop, 244, 214, '用户上传图 - 待复核区域', userImage, userImageUrl, findings, 'userRegion')
+  drawImageBox(doc, 307, imageTop, 244, 214, '候选权利图 - 对比参照', officialImage, officialImageUrl, findings, 'officialRegion', {
+    candidate,
+    fallbackKind: 'candidateReference',
+    sourceLabel: officialImageResult && officialImageResult.source && officialImageResult.source.label,
+    overlayOnFallback: false,
   })
 
-  drawFooter(doc, 'Candidate data is sourced from public USPTO search results')
+  doc.y = imageTop + 234
+  drawSectionLabel(doc, config, '编号证据说明', REPORT_SECTION_TITLES[1], 'Evidence findings continued')
+  findings.forEach((finding) => drawFindingRow(doc, config, finding))
+
+  ensureSpace(doc, config, 178, REPORT_SECTION_TITLES[1], 'Similarity assessment continued')
+  drawSectionLabel(doc, config, '相似性评估矩阵', REPORT_SECTION_TITLES[1], 'Similarity assessment continued')
+  drawSimilarityMatrix(doc, config, buildSimilarityMatrix(report))
+
+  drawFooter(doc, 'Visual evidence board')
 }
 
-function renderRiskAnalysis(doc, report) {
-  doc.addPage()
-  pageHeader(doc, '风险结论与行动方案', 'Risk Analysis and Action Plan')
+function renderRiskActionSection(doc, report, config) {
+  addSectionPage(doc, config, REPORT_SECTION_TITLES[2], 'Risk analysis and remediation plan')
 
   const result = report.result || {}
-  const riskItems = result.riskItems || []
+  const riskItems = Array.isArray(result.riskItems) ? result.riskItems : []
+  const candidates = Array.isArray(report.trademarkCandidates) ? report.trademarkCandidates : []
 
-  sectionSubtitle(doc, '风险点拆解')
+  drawSectionLabel(doc, config, '核心风险分析', REPORT_SECTION_TITLES[2], 'Risk analysis continued')
   if (riskItems.length) {
-    riskItems.forEach((item, index) => drawRiskItem(doc, item, index))
+    riskItems.slice(0, 5).forEach((item, index) => drawRiskItem(doc, config, item, index))
   } else {
-    drawRiskNote(doc, doc.x, doc.y, '风险提示', '模型未返回明确风险点，建议人工复核商标、版权、外观专利和平台投诉规则。')
-  }
-
-  ensurePageSpace(doc, 160)
-  sectionSubtitle(doc, '建议动作优先级')
-  drawActionPlan(doc, result.suggestions || [])
-
-  const warnings = report.warnings || result.usptoWarnings || []
-  if (warnings.length) {
-    ensurePageSpace(doc, 110)
-    sectionSubtitle(doc, '系统提示')
-    drawBulletPanel(doc, doc.x, doc.y, 510, warnings, {
-      markerColor: COLORS.amber,
+    drawCallout(doc, config, {
+      title: '风险提示',
+      text: '模型未返回明确风险项。建议补充更清晰的正面图、细节图、标题关键词和商品类目信息后再次检测。',
+      level: 'warning',
     })
   }
 
-  drawFooter(doc, 'Risk conclusion is for screening and evidence preparation')
+  ensureSpace(doc, config, 142, REPORT_SECTION_TITLES[2], 'Candidate trademark review continued')
+  drawSectionLabel(doc, config, '候选权利依据', REPORT_SECTION_TITLES[2], 'Candidate trademark review continued')
+  if (candidates.length) {
+    candidates.slice(0, 3).forEach((candidate, index) => drawCandidateSummary(doc, config, candidate, index))
+  } else {
+    drawCallout(doc, config, {
+      title: '候选商标',
+      text: '当前未获得可展示的候选商标。若商品面向美国市场，建议补充品牌词、图案说明、商品类别后重新检测，并由人工复核 USPTO/TSDR 结果。',
+      level: 'warning',
+    })
+  }
+
+  ensureSpace(doc, config, 170, REPORT_SECTION_TITLES[2], 'Action plan continued')
+  drawSectionLabel(doc, config, '整改优先级', REPORT_SECTION_TITLES[2], 'Action plan continued')
+  drawActionPlan(doc, config, result.suggestions || [])
+
+  drawFooter(doc, 'Risk analysis and remediation plan')
 }
 
-function renderEvidenceChecklist(doc) {
-  doc.addPage()
-  pageHeader(doc, '证据清单与复核路径', 'Evidence Checklist')
+function renderEvidenceSection(doc, report, config) {
+  addSectionPage(doc, config, REPORT_SECTION_TITLES[3], 'Evidence checklist and review path')
 
-  sectionSubtitle(doc, '建议立即留存的材料')
-  drawChecklist(doc, [
-    '上传检测的原图、设计源文件、拍摄底稿和修改记录。',
+  drawSectionLabel(doc, config, '建议立即留存', REPORT_SECTION_TITLES[3], 'Evidence checklist continued')
+  drawChecklist(doc, config, [
+    '本次上传检测的原图、设计源文件、拍摄底稿和修改记录。',
     '供应链授权、设计委托合同、采购凭证和素材授权证明。',
     '平台链接、标题、五点描述、Search Terms、类目和发布时间记录。',
-    'USPTO候选商标截图、TSDR链接、权利人信息和商品类别说明。',
+    '候选商标截图、TSDR链接、权利人信息和商品服务类别说明。',
     '如已收到投诉或TRO材料，保存平台通知、法院文件、冻结截图和销售数据。',
   ])
 
-  ensurePageSpace(doc, 150)
-  sectionSubtitle(doc, '复核路径')
-  drawProcessSteps(doc, [
-    ['1', '先处理高风险视觉元素', '移除或重绘被标注的图形、文字、Logo和角色元素。'],
-    ['2', '复查商品类别与使用方式', '判断候选商标的商品服务范围是否与当前Listing存在关联。'],
-    ['3', '补充权利与原创证据', '整理授权链、原创证明和修改前后对比图。'],
-    ['4', '律师复核后再发布', '高风险或已发生投诉的SKU，建议律师复核后再继续销售。'],
+  ensureSpace(doc, config, 172, REPORT_SECTION_TITLES[3], 'Review path continued')
+  drawSectionLabel(doc, config, '复核路径', REPORT_SECTION_TITLES[3], 'Review path continued')
+  drawProcessSteps(doc, config, [
+    ['1', '先处理被标注的高风险视觉元素', '移除或重绘可能形成来源识别的图形、文字、Logo、角色和包装元素。'],
+    ['2', '复查商品类别与使用场景', '判断候选商标的商品服务范围是否与当前Listing存在消费者混淆可能。'],
+    ['3', '补充权利与原创证据', '整理授权链、原创证明和修改前后对比图，形成可提交给平台或律师的证据包。'],
+    ['4', '律师复核后再发布', '高风险或已发生投诉的SKU，建议律师复核后再继续销售或恢复上架。'],
   ])
 
-  sectionSubtitle(doc, '免责声明')
-  doc.font('body').fontSize(9).fillColor(COLORS.muted)
-    .text(
-      '本报告为自动化初筛材料，不构成法律意见、授权判断或最终侵权认定。平台处理结果、法院文件、权利人主张和律师意见应优先适用。',
-      42,
-      doc.y,
-      { width: 510, lineGap: 5 }
-    )
+  ensureSpace(doc, config, 96, REPORT_SECTION_TITLES[3], 'Disclaimer continued')
+  drawCallout(doc, config, {
+    title: '免责声明',
+    text: '本报告为自动化初筛材料，不构成法律意见、授权判断或最终侵权认定。平台处理结果、法院文件、权利人主张和律师意见应优先适用。',
+    level: 'info',
+  })
 
   drawFooter(doc, 'Evidence checklist and legal disclaimer')
 }
@@ -221,21 +256,52 @@ function buildExecutiveSummary(report) {
   const result = report.result || {}
   const candidate = first(report.trademarkCandidates)
   const findings = buildVisualEvidenceFindings(report)
-  const score = Number(result.score || 0)
+  const score = clampScore(result.score)
+  const publishText = result.canPublish
+    ? '当前可继续复核，但仍建议保留完整证据链。'
+    : '建议暂缓上架，先处理高风险素材、关键词和候选权利冲突。'
 
   return [
-    `综合风险分 ${score}/100，${result.canPublish ? '当前可继续复核，但仍建议保留证据链。' : '建议暂缓上架，先处理高风险素材和关键词。'}`,
+    `综合风险分 ${score}/100。${publishText}`,
     candidate
       ? `系统匹配到候选权利标识 ${candidate.wordmark || candidate.serialNumber || 'USPTO候选商标'}，需重点核查权利状态、商品类别和实际使用方式。`
-      : '当前未形成明确候选商标结论，建议补充更清晰的图片、品牌词或商品类目信息。',
-    findings.length
-      ? `图片对比页已标注 ${findings.length} 个疑似侵权关注点，可作为后续修改素材和律师复核的定位依据。`
-      : '当前图片线索较弱，建议补充正面图、细节图和图案来源说明。',
-    input.platform ? `${input.platform} 平台通常会结合商品页面整体展示、消费者混淆可能性和权利人投诉材料判断风险。` : '平台审核通常会结合页面整体展示、消费者混淆可能性和权利人投诉材料判断风险。',
+      : '当前未形成明确候选商标结论，建议补充清晰图片、品牌词或商品类目信息后复核。',
+    `图片对比页已标注 ${findings.length} 个疑似侵权关注点，可作为修改素材和律师复核的定位依据。`,
+    `${input.platform || '目标平台'} 通常会结合页面整体展示、消费者混淆可能性和权利人投诉材料判断风险。`,
   ]
 }
 
 function buildVisualEvidenceFindings(report) {
+  const explicitFindings = normalizeVisualFindings(
+    (report.result && report.result.visualFindings) || report.visualFindings
+  )
+  if (explicitFindings.length) return explicitFindings
+
+  const signalFindings = buildSignalRegionFindings(report)
+  if (signalFindings.length) return signalFindings
+
+  return buildGenericVisualEvidenceFindings(report)
+}
+
+function buildSignalRegionFindings(report) {
+  const signals = report.trademarkSignals || {}
+  const candidate = first(report.trademarkCandidates) || {}
+  const wordmark = candidate.wordmark || first(normalizeList(signals.wordMarks || signals.searchTerms)) || '候选商标'
+  const regions = normalizeMarkRegions(signals.markRegions)
+
+  return regions.slice(0, 3).map((item, index) => ({
+    id: index + 1,
+    title: `疑似侵权区域 ${index + 1} - ${formatRegionType(item.type)}`,
+    detail: `${item.label || formatRegionType(item.type)} 与候选商标 ${wordmark} 存在来源识别层面的近似关注点。`,
+    evidence: item.evidence || '该区域来自上传图的商标/Logo视觉线索定位，候选权利图区域仍需结合官方图人工复核。',
+    level: item.level || (index === 0 ? 'high' : 'medium'),
+    confidence: item.confidence,
+    userRegion: expandRegion(item.region, 0.04),
+    officialRegion: inferOfficialRegion(index),
+  }))
+}
+
+function buildGenericVisualEvidenceFindings(report) {
   const result = report.result || {}
   const signals = report.trademarkSignals || {}
   const candidate = first(report.trademarkCandidates) || {}
@@ -247,44 +313,27 @@ function buildVisualEvidenceFindings(report) {
   const wordmark = candidate.wordmark || first(wordMarks) || '候选商标'
   const goods = candidate.goodsAndServices || '相关商品/服务类别'
 
-  return [
-    {
-      id: 1,
-      title: '疑似侵权区域 1 - 文字/商标词',
-      detail: `${wordMarks.length ? wordMarks.join('、') : wordmark} 与候选商标 ${wordmark} 存在文字或来源识别层面的近似关注点。`,
-      evidence: riskItems[0] || '文字标识与候选商标形成来源联想。',
-      level: 'high',
-      userRegion: { x: 0.14, y: 0.18, w: 0.72, h: 0.2 },
-      officialRegion: { x: 0.16, y: 0.18, w: 0.68, h: 0.2 },
-    },
-    {
-      id: 2,
-      title: '疑似侵权区域 2 - 图形/Logo元素',
-      detail: `${visuals.length ? visuals.join('、') : '图形、徽章或Logo元素'} 与候选权利图在核心视觉元素上需要进一步人工复核。`,
-      evidence: candidate.designSearchCode && candidate.designSearchCode.length
-        ? `候选商标含设计检索代码：${candidate.designSearchCode.join('、')}`
-        : '图形元素可能构成消费者来源识别信号。',
-      level: 'high',
-      userRegion: { x: 0.24, y: 0.42, w: 0.52, h: 0.38 },
-      officialRegion: { x: 0.24, y: 0.4, w: 0.52, h: 0.38 },
-    },
-    {
-      id: 3,
-      title: '疑似侵权区域 3 - 颜色/构图与使用场景',
-      detail: `${colors.length || composition.length ? `${colors.concat(composition).join('、')}` : '颜色、构图和展示方式'} 与候选标识的商业呈现方式存在关联性，需要结合商品页面整体判断。`,
-      evidence: `候选商品/服务范围：${truncate(goods, 120)}`,
-      level: 'medium',
-      userRegion: { x: 0.08, y: 0.08, w: 0.84, h: 0.84 },
-      officialRegion: { x: 0.08, y: 0.08, w: 0.84, h: 0.84 },
-    },
-  ]
+  return [{
+    id: 1,
+    title: '疑似侵权主体复核区域',
+    detail: `${wordMarks.length ? wordMarks.join('、') : wordmark} 与候选商标 ${wordmark} 存在来源识别层面的近似关注点。`,
+    evidence: [
+      riskItems[0],
+      visuals.length ? `视觉线索：${visuals.join('、')}` : '',
+      colors.length || composition.length ? `呈现线索：${colors.concat(composition).join('、')}` : '',
+      `候选商品/服务范围：${truncate(goods, 90)}`,
+    ].filter(Boolean).join('；') || '模型未返回精确坐标，以下标注为主体复核范围，需人工核验。',
+    level: 'medium',
+    userRegion: { x: 0.12, y: 0.12, w: 0.76, h: 0.76 },
+    officialRegion: { x: 0.12, y: 0.12, w: 0.76, h: 0.76 },
+  }]
 }
 
 function buildSimilarityMatrix(report) {
   const result = report.result || {}
   const signals = report.trademarkSignals || {}
   const candidate = first(report.trademarkCandidates) || {}
-  const score = Number(result.score || 0)
+  const score = clampScore(result.score)
   const level = score >= 75 ? 'high' : score >= 45 ? 'medium' : 'low'
   const wordMarks = normalizeList(signals.wordMarks || signals.searchTerms)
   const visuals = normalizeList(signals.visualElements)
@@ -310,9 +359,7 @@ function buildSimilarityMatrix(report) {
     {
       dimension: '颜色/构图',
       assessment: composition.length ? levelText(score >= 60 ? 'medium' : 'low') : '中性观察',
-      evidence: composition.length
-        ? `构图线索包括 ${composition.join('、')}。`
-        : '未提取到稳定构图线索。',
+      evidence: composition.length ? `构图线索包括 ${composition.join('、')}。` : '未提取到稳定构图线索。',
       level: score >= 60 ? 'medium' : 'low',
     },
     {
@@ -320,120 +367,385 @@ function buildSimilarityMatrix(report) {
       assessment: candidate.goodsAndServices ? levelText(score >= 60 ? 'medium' : 'low') : '待补充',
       evidence: candidate.goodsAndServices
         ? `候选商标商品/服务：${truncate(candidate.goodsAndServices, 160)}`
-        : '未获取到候选商品服务范围，需人工检索补充。',
+        : '未获得候选商品服务范围，需要人工检索补充。',
       level: score >= 60 ? 'medium' : 'low',
     },
   ]
 }
 
-function drawCoverHeader(doc) {
+function normalizeVisualFindings(values) {
+  if (!Array.isArray(values)) return []
+
+  return values.map((item, index) => {
+    if (!item) return null
+    const userRegion = normalizeRegion(item.userRegion || item.region)
+    const officialRegion = normalizeRegion(item.officialRegion)
+    if (!userRegion && !officialRegion) return null
+
+    return {
+      id: index + 1,
+      title: String(item.title || `疑似侵权区域 ${index + 1}`).trim(),
+      detail: String(item.detail || '模型定位到需要人工复核的视觉相似区域。').trim(),
+      evidence: String(item.evidence || '该区域由AI根据上传图与候选权利图的相似点生成。').trim(),
+      level: normalizeLevel(item.level || 'medium'),
+      confidence: normalizeConfidence(item.confidence),
+      userRegion,
+      officialRegion,
+    }
+  }).filter(Boolean).slice(0, 4)
+}
+
+function normalizeMarkRegions(values) {
+  if (!Array.isArray(values)) return []
+
+  return values.map((item) => {
+    const region = normalizeRegion(item && (item.region || item.userRegion))
+    if (!region) return null
+    return {
+      label: String(item.label || item.title || '商标/Logo区域').trim(),
+      type: String(item.type || 'logo').trim(),
+      evidence: item.evidence ? String(item.evidence).trim() : '',
+      level: normalizeLevel(item.level || 'medium'),
+      confidence: normalizeConfidence(item.confidence),
+      region,
+    }
+  }).filter(Boolean)
+}
+
+function normalizeRegion(region) {
+  if (!region) return null
+  const x = Number(region.x)
+  const y = Number(region.y)
+  const w = Number(region.w)
+  const h = Number(region.h)
+  if ([x, y, w, h].some((value) => Number.isNaN(value))) return null
+  if (w <= 0 || h <= 0) return null
+
+  return roundRegion({
+    x: clampUnit(x),
+    y: clampUnit(y),
+    w: clampUnit(Math.min(w, 1 - clampUnit(x))),
+    h: clampUnit(Math.min(h, 1 - clampUnit(y))),
+  })
+}
+
+function expandRegion(region, padding) {
+  const pad = Number(padding) || 0
+  const x = Math.max(0, region.x - pad)
+  const y = Math.max(0, region.y - pad)
+  const right = Math.min(1, region.x + region.w + pad)
+  const bottom = Math.min(1, region.y + region.h + pad)
+
+  return roundRegion({
+    x,
+    y,
+    w: Math.max(0.04, right - x),
+    h: Math.max(0.04, bottom - y),
+  })
+}
+
+function inferOfficialRegion(index) {
+  const regions = [
+    { x: 0.16, y: 0.18, w: 0.68, h: 0.24 },
+    { x: 0.18, y: 0.38, w: 0.64, h: 0.42 },
+    { x: 0.1, y: 0.1, w: 0.8, h: 0.8 },
+  ]
+  return regions[index] || regions[regions.length - 1]
+}
+
+function roundRegion(region) {
+  return {
+    x: roundUnit(region.x),
+    y: roundUnit(region.y),
+    w: roundUnit(region.w),
+    h: roundUnit(region.h),
+  }
+}
+
+function roundUnit(value) {
+  return Math.round(Number(value) * 1000) / 1000
+}
+
+function clampUnit(value) {
+  return Math.max(0, Math.min(1, Number(value)))
+}
+
+function normalizeConfidence(value) {
+  const score = Number(value)
+  if (Number.isNaN(score)) return undefined
+  return clampUnit(score)
+}
+
+function normalizeLevel(level) {
+  const value = String(level || '').toLowerCase()
+  if (value === 'high' || value === 'medium' || value === 'low') return value
+  return 'medium'
+}
+
+function formatRegionType(type) {
+  const value = String(type || '').toLowerCase()
+  if (value.includes('word')) return '文字/商标词'
+  if (value.includes('logo') || value.includes('mark')) return 'Logo/商标图形'
+  if (value.includes('shape') || value.includes('design')) return '图形/设计元素'
+  return '商标/Logo区域'
+}
+
+function addSectionPage(doc, config, title, subtitle) {
+  doc.addPage()
+  drawPageWatermark(doc, config)
+  drawPageHeader(doc, title, subtitle)
+}
+
+function drawPageWatermark(doc, config) {
+  if (!config.watermarkBuffer) return
+
+  const width = 360
+  const x = (doc.page.width - width) / 2
+  const y = 232
   doc.save()
-  doc.rect(0, 0, doc.page.width, 98).fill('#0f172a')
-  doc.fillColor('#ffffff').font('bold').fontSize(18).text('GGKJ RISK INTELLIGENCE', 42, 30)
-  doc.font('body').fontSize(9).fillColor('#bfdbfe').text('Cross-border IP and TRO screening report', 42, 56)
-  doc.roundedRect(422, 30, 130, 34, 17).fill('#1d4ed8')
-  doc.fillColor('#ffffff').fontSize(10).text('Pre-listing Review', 442, 41, { width: 90, align: 'center' })
+  doc.opacity(0.055)
+  doc.image(config.watermarkBuffer, x, y, { width })
+  doc.opacity(1)
   doc.restore()
 }
 
-function pageHeader(doc, title, subtitle) {
-  doc.font('bold').fontSize(16).fillColor(COLORS.ink).text(title, 42, 42, { width: 360 })
-  doc.font('body').fontSize(9).fillColor(COLORS.muted).text(subtitle, 42, 65, { width: 360 })
-  doc.moveTo(42, 82).lineTo(552, 82).strokeColor(COLORS.line).lineWidth(1).stroke()
-  doc.y = 104
+function drawPageHeader(doc, title, subtitle) {
+  doc.font('bold').fontSize(16).fillColor(COLORS.ink)
+  drawFauxBoldText(doc, title, 44, 42, { width: 330, fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth })
+  doc.font('body').fontSize(9.8).fillColor(COLORS.muted)
+  drawFauxBoldText(doc, subtitle, 44, 66, { width: 330, fauxBoldStrokeWidth: TYPOGRAPHY.bodyStrokeWidth })
+  doc.moveTo(44, 88).lineTo(551, 88).strokeColor(COLORS.line).lineWidth(1).stroke()
+  doc.font('bold').fontSize(9).fillColor(COLORS.blue).text('GGKJ', 501, 43, { width: 50, align: 'right' })
+  doc.y = 108
 }
 
-function drawFooter(doc, label) {
-  const y = doc.page.height - 52
-  const previousY = doc.y
-  doc.moveTo(42, y - 8).lineTo(552, y - 8).strokeColor('#e5eaf3').lineWidth(1).stroke()
-  doc.font('body').fontSize(8).fillColor('#94a3b8')
-    .text(label, 42, y, {
-      width: 360,
-      height: 12,
-      lineBreak: false,
-    })
-  doc.y = previousY
-}
-
-function drawScoreCard(doc, x, y, width, height, score, level) {
-  doc.save()
-  doc.roundedRect(x, y, width, height, 12).fill(level.soft)
-  doc.roundedRect(x, y, width, height, 12).strokeColor(level.color).lineWidth(1).stroke()
-  doc.font('body').fontSize(9).fillColor(level.color).text('综合风险分', x + 16, y + 14)
-  doc.font('bold').fontSize(34).fillColor(level.color).text(String(score), x + 16, y + 30, { width: 70 })
-  doc.font('bold').fontSize(11).fillColor(level.color).text(level.text, x + 88, y + 42, { width: 48, align: 'right' })
-  doc.restore()
+function drawHeroBand(doc, level, score) {
+  drawPanel(doc, 388, 118, 163, 102, level.soft, level.color)
+  doc.font('body').fontSize(10).fillColor(level.color).text('综合风险分', 408, 136)
+  doc.font('bold').fontSize(35).fillColor(level.color).text(String(score), 408, 154, { width: 76 })
+  doc.font('bold').fontSize(12).fillColor(level.color).text(level.text, 488, 164, { width: 42, align: 'right' })
 }
 
 function drawInfoGrid(doc, x, y, rows) {
-  const width = 510
-  const rowHeight = 34
+  const width = PAGE.contentWidth
+  const rowHeight = 36
+
   rows.forEach(([key, value], index) => {
     const rowY = y + index * rowHeight
-    doc.roundedRect(x, rowY, width, rowHeight - 6, 6).fill(index % 2 === 0 ? '#f8fafc' : '#ffffff')
-    doc.font('body').fontSize(9).fillColor(COLORS.muted).text(key, x + 12, rowY + 9, { width: 86 })
-    doc.font('body').fontSize(9).fillColor(COLORS.ink).text(String(value || '-'), x + 110, rowY + 9, { width: width - 124 })
+    drawPanel(doc, x, rowY, width, rowHeight - 6, index % 2 === 0 ? COLORS.faint : COLORS.white, COLORS.line, 6)
+    doc.font('bold').fontSize(9.5).fillColor(COLORS.muted).text(key, x + 12, rowY + 9, { width: 86 })
+    doc.font('body').fontSize(10.4).fillColor(COLORS.body)
+    drawFauxBoldText(doc, String(value || '-'), x + 112, rowY + 8, {
+      width: width - 126,
+      lineGap: 2,
+    })
   })
 }
 
-function drawBulletPanel(doc, x, y, width, items, options) {
+function drawSectionLabel(doc, config, label, title, subtitle) {
+  ensureSpace(doc, config, 34, title, subtitle)
+  doc.font('bold').fontSize(13).fillColor(COLORS.ink)
+  drawFauxBoldText(doc, label, 44, doc.y, { fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth })
+  doc.moveTo(44, doc.y + 6).lineTo(551, doc.y + 6).strokeColor(COLORS.line).lineWidth(1).stroke()
+  doc.moveDown(0.85)
+}
+
+function drawReadableList(doc, items, options) {
   const config = options || {}
-  const list = normalizeList(items)
-  const height = Math.max(66, list.length * 33 + (config.title ? 36 : 18))
-  drawPanel(doc, x, y, width, height, '#ffffff', COLORS.line)
-
-  let cursorY = y + 16
-  if (config.title) {
-    doc.font('bold').fontSize(11).fillColor(COLORS.ink).text(config.title, x + 16, cursorY, { width: width - 32 })
-    cursorY += 26
-  }
-
-  list.forEach((item) => {
-    doc.circle(x + 22, cursorY + 6, 3).fill(config.markerColor || COLORS.blue)
-    doc.font('body').fontSize(9).fillColor(COLORS.ink).text(item, x + 34, cursorY, { width: width - 50, lineGap: 4 })
-    cursorY += Math.max(28, doc.heightOfString(item, { width: width - 50, lineGap: 4 }) + 8)
+  normalizeList(items).forEach((item) => {
+    const height = Math.max(34, doc.heightOfString(item, { width: 452, lineGap: 4 }) + 14)
+    ensureSpace(doc, config.pageConfig, height, config.pageTitle, config.pageSubtitle)
+    const y = doc.y
+    doc.circle(54, y + 10, 4).fill(config.markerColor || COLORS.blue)
+    doc.font('body').fontSize(11).fillColor(COLORS.body)
+    drawFauxBoldText(doc, item, 70, y, {
+      width: 452,
+      lineGap: 4,
+    })
+    doc.y = y + height + (config.itemGap || 5)
   })
-
-  doc.y = y + height + 8
 }
 
-function drawRiskNote(doc, x, y, title, text) {
-  const height = Math.max(70, doc.heightOfString(text, { width: 450, lineGap: 4 }) + 38)
-  drawPanel(doc, x, y, 510, height, COLORS.blueSoft, '#bfdbfe')
-  doc.font('bold').fontSize(10).fillColor(COLORS.blue).text(title, x + 16, y + 14, { width: 130 })
-  doc.font('body').fontSize(9).fillColor(COLORS.ink).text(text, x + 118, y + 14, { width: 374, lineGap: 4 })
-  doc.y = y + height + 12
+function drawCallout(doc, pageConfig, options) {
+  const item = options || {}
+  const level = item.level || 'info'
+  const color = level === 'warning' ? COLORS.amber : COLORS.blue
+  const fill = level === 'warning' ? COLORS.amberSoft : COLORS.blueSoft
+  const height = Math.max(82, doc.heightOfString(item.text || '', { width: 370, lineGap: 5 }) + 38)
+  ensureSpace(doc, pageConfig, height + 10, options && options.pageTitle, options && options.pageSubtitle)
+  const y = doc.y
+
+  drawPanel(doc, 44, y, PAGE.contentWidth, height, fill, color)
+  doc.font('bold').fontSize(11).fillColor(color)
+  drawFauxBoldText(doc, item.title || '提示', 62, y + 16, { width: 118, fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth })
+  doc.font('body').fontSize(10.6).fillColor(COLORS.body)
+  drawFauxBoldText(doc, item.text || '', 176, y + 16, {
+    width: 352,
+    lineGap: 5,
+  })
+  doc.y = y + height + 16
 }
 
-function drawImageBox(doc, x, y, width, height, title, imageBuffer, url, findings, regionKey) {
-  drawPanel(doc, x, y, width, height, '#ffffff', COLORS.line)
-  doc.font('bold').fontSize(10).fillColor(COLORS.ink).text(title, x + 12, y + 12, { width: width - 24 })
-  if (!imageBuffer) {
-    doc.font('body').fontSize(7.5).fillColor(COLORS.muted)
-      .text(url ? `图片暂未嵌入：${truncate(url, 72)}` : '暂无图片', x + 12, y + 27, {
-        width: width - 24,
-        lineBreak: false,
-      })
-  }
+function drawImageBox(doc, x, y, width, height, title, imageBuffer, url, findings, regionKey, options) {
+  const config = options || {}
+  drawPanel(doc, x, y, width, height, COLORS.white, COLORS.line)
+  doc.font('bold').fontSize(10.4).fillColor(COLORS.ink)
+  drawFauxBoldText(doc, title, x + 12, y + 12, { width: width - 24, fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth })
 
   const imageX = x + 12
   const imageY = y + 42
   const imageW = width - 24
   const imageH = height - 56
+  drawPanel(doc, imageX, imageY, imageW, imageH, COLORS.faint, '#cbd5e1', 8)
 
-  doc.roundedRect(imageX, imageY, imageW, imageH, 8).fill(COLORS.soft)
-  doc.roundedRect(imageX, imageY, imageW, imageH, 8).strokeColor('#cbd5e1').lineWidth(1).stroke()
+  const imageDrawn = imageBuffer && drawEmbeddedImage(doc, imageBuffer, imageX, imageY, imageW, imageH)
+  if (imageDrawn && config.sourceLabel) {
+    drawImageSourceCaption(doc, config.sourceLabel, imageX, imageY, imageW, imageH)
+  }
+  if (!imageDrawn) {
+    if (config.fallbackKind === 'candidateReference') {
+      drawCandidateReferenceCard(doc, config.candidate, imageX, imageY, imageW, imageH)
+    } else {
+      drawImagePlaceholder(doc, url, imageX, imageY, imageW, imageH)
+    }
+  }
 
-  if (imageBuffer) {
-    doc.image(imageBuffer, imageX + 4, imageY + 4, {
-      fit: [imageW - 8, imageH - 8],
+  if (imageDrawn || config.overlayOnFallback !== false) {
+    drawAnnotationOverlay(doc, imageX, imageY, imageW, imageH, findings, regionKey)
+  }
+
+  return Boolean(imageDrawn)
+}
+
+function drawImageSourceCaption(doc, label, imageX, imageY, imageW, imageH) {
+  const text = `来源：${truncate(label, 42)}`
+  const y = imageY + imageH - 17
+  doc.save()
+  doc.roundedRect(imageX + 8, y, imageW - 16, 12, 6).fill('#ffffff')
+  doc.opacity(0.9)
+  doc.font('body').fontSize(6.8).fillColor(COLORS.blue).text(text, imageX + 12, y + 3, {
+    width: imageW - 24,
+    align: 'center',
+    lineBreak: false,
+  })
+  doc.opacity(1)
+  doc.restore()
+}
+
+function drawEmbeddedImage(doc, imageBuffer, imageX, imageY, imageW, imageH) {
+  try {
+    doc.image(imageBuffer, imageX + 5, imageY + 5, {
+      fit: [imageW - 10, imageH - 10],
       align: 'center',
       valign: 'center',
     })
+    return true
+  } catch (error) {
+    return false
   }
+}
 
-  drawAnnotationOverlay(doc, imageX, imageY, imageW, imageH, findings, regionKey)
+function drawImagePlaceholder(doc, url, imageX, imageY, imageW, imageH) {
+  const text = url
+    ? '图片格式暂未嵌入\n请以原上传图为准'
+    : '暂无图片'
+
+  doc.font('body').fontSize(8.2).fillColor(COLORS.muted)
+    .text(text, imageX + 12, imageY + imageH / 2 - 8, {
+      width: imageW - 24,
+      align: 'center',
+    })
+}
+
+function drawCandidateReferenceCard(doc, candidate, imageX, imageY, imageW, imageH) {
+  const summary = buildCandidateReferenceSummary(candidate)
+  const cardX = imageX + 10
+  const cardY = imageY + 10
+  const cardW = imageW - 20
+  const cardH = imageH - 20
+  const wordmarkY = cardY + 38
+  const wordmarkH = 42
+  const wordmark = truncate(summary.wordmark, 30)
+  const wordmarkFontSize = wordmark.length > 22 ? 15 : wordmark.length > 14 ? 18 : 22
+
+  drawPanel(doc, cardX, cardY, cardW, cardH, COLORS.white, '#bfd1e8', 8)
+  doc.font('bold').fontSize(7.6).fillColor(COLORS.blue)
+  drawFauxBoldText(doc, summary.note, cardX + 10, cardY + 10, {
+    width: cardW - 20,
+    fauxBoldStrokeWidth: TYPOGRAPHY.bodyStrokeWidth,
+  })
+
+  doc.roundedRect(cardX + 12, wordmarkY, cardW - 24, wordmarkH, 8)
+    .fill('#eef6ff')
+    .strokeColor('#9bbbe6')
+    .lineWidth(1)
+    .stroke()
+  doc.font('bold').fontSize(wordmarkFontSize).fillColor(COLORS.ink)
+  drawFauxBoldText(doc, wordmark, cardX + 20, wordmarkY + 11, {
+    width: cardW - 40,
+    align: 'center',
+    lineBreak: false,
+    fauxBoldStrokeWidth: 0.14,
+    fauxBoldStrokeColor: COLORS.ink,
+  })
+
+  drawReferenceBadge(doc, cardX + 12, wordmarkY + wordmarkH + 8, summary.status)
+  doc.font('body').fontSize(7.5).fillColor(COLORS.muted)
+  drawFauxBoldText(doc, summary.serialLine, cardX + 80, wordmarkY + wordmarkH + 12, {
+    width: cardW - 92,
+    lineBreak: false,
+  })
+
+  doc.font('body').fontSize(7.2).fillColor(COLORS.body)
+  drawFauxBoldText(doc, summary.ownerLine, cardX + 12, wordmarkY + wordmarkH + 29, {
+    width: cardW - 24,
+    lineBreak: false,
+  })
+  drawFauxBoldText(doc, summary.goodsLine, cardX + 12, wordmarkY + wordmarkH + 45, {
+    width: cardW - 24,
+    lineBreak: false,
+  })
+}
+
+function drawReferenceBadge(doc, x, y, status) {
+  const label = truncate(status || 'TO REVIEW', 13)
+  const level = /LIVE|REGISTERED|ACTIVE/i.test(label) ? 'low' : 'medium'
+  const color = levelColor(level)
+  const soft = levelSoftColor(level)
+
+  doc.save()
+  doc.roundedRect(x, y, 58, 18, 9).fill(soft)
+  doc.font('bold').fontSize(7.2).fillColor(color).text(label, x + 5, y + 5, {
+    width: 48,
+    align: 'center',
+    lineBreak: false,
+  })
+  doc.restore()
+}
+
+function buildCandidateReferenceSummary(candidate) {
+  const item = candidate || {}
+  const wordmark = String(item.wordmark || item.serialNumber || '候选权利标识').trim()
+  const status = String(item.status || 'TO REVIEW').trim()
+  const serialNumber = String(item.serialNumber || '-').trim()
+  const registrationNumber = String(item.registrationNumber || '-').trim()
+  const ownerName = String(item.ownerName || 'Rights owner pending review').trim()
+  const goodsAndServices = String(item.goodsAndServices || 'Goods/services pending review').trim()
+  const hasOfficialImageUrl = Boolean(String(item.markImageUrl || '').trim())
+  const sourceLabel = String(item.markImageSourceLabel || (item.sourceUrl ? 'USPTO/TSDR official record' : 'Rights source pending review')).trim()
+
+  return {
+    wordmark,
+    status,
+    serialLine: `Serial: ${serialNumber} | Reg: ${registrationNumber}`,
+    ownerLine: `Owner: ${truncate(ownerName, 50)}`,
+    goodsLine: `Goods/Services: ${truncate(goodsAndServices, 70)}`,
+    sourceLine: `Source: ${truncate(sourceLabel, 44)}`,
+    hasOfficialImageUrl,
+    note: hasOfficialImageUrl
+      ? `官方图像暂未嵌入，以下为候选权利文字参照。来源：${truncate(sourceLabel, 24)}。`
+      : `该候选记录暂无可用官方图像，以下为候选权利文字参照。来源：${truncate(sourceLabel, 24)}。`,
+  }
 }
 
 function drawAnnotationOverlay(doc, x, y, width, height, findings, regionKey) {
@@ -447,166 +759,242 @@ function drawAnnotationOverlay(doc, x, y, width, height, findings, regionKey) {
     const rh = region.h * height
 
     doc.save()
-    doc.roundedRect(rx, ry, rw, rh, 5).strokeColor(COLORS.red).lineWidth(1.6).stroke()
+    doc.roundedRect(rx, ry, rw, rh, 5).strokeColor(COLORS.red).lineWidth(1.7).stroke()
     doc.circle(rx + 10, ry + 10, 9).fill(COLORS.red)
-    doc.font('bold').fontSize(8).fillColor('#ffffff')
+    doc.font('bold').fontSize(8).fillColor(COLORS.white)
       .text(String(finding.id), rx + 5, ry + 5, { width: 10, align: 'center' })
     doc.restore()
   })
 }
 
-function drawFindingRow(doc, finding) {
-  ensurePageSpace(doc, 64)
+function drawFindingRow(doc, config, finding) {
+  doc.font('body').fontSize(10)
+  const detailHeight = doc.heightOfString(finding.detail, { width: 420, lineGap: 4 })
+  doc.font('body').fontSize(9.4)
+  const evidenceHeight = doc.heightOfString(finding.evidence, { width: 420, lineGap: 3 })
+  const height = Math.max(84, detailHeight + evidenceHeight + 58)
+  ensureSpace(doc, config, height + 8, REPORT_SECTION_TITLES[1], 'Evidence findings continued')
   const y = doc.y
-  doc.circle(52, y + 12, 10).fill(COLORS.red)
-  doc.font('bold').fontSize(9).fillColor('#ffffff').text(String(finding.id), 47, y + 7, { width: 10, align: 'center' })
-  doc.font('bold').fontSize(10).fillColor(COLORS.ink).text(finding.title, 72, y, { width: 430 })
-  doc.font('body').fontSize(9).fillColor(COLORS.muted).text(finding.detail, 72, y + 17, { width: 430, lineGap: 3 })
-  doc.font('body').fontSize(8).fillColor(COLORS.blue).text(`证据依据：${finding.evidence}`, 72, y + 42, { width: 430, lineGap: 3 })
-  doc.y = y + 66
+
+  doc.circle(55, y + 15, 11).fill(COLORS.red)
+  doc.font('bold').fontSize(9).fillColor(COLORS.white).text(String(finding.id), 50, y + 9, { width: 10, align: 'center' })
+  doc.font('bold').fontSize(10.7).fillColor(COLORS.ink)
+  drawFauxBoldText(doc, finding.title, 74, y, { width: 420, fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth })
+  doc.font('body').fontSize(10).fillColor(COLORS.body)
+  drawFauxBoldText(doc, finding.detail, 74, y + 19, { width: 420, lineGap: 4 })
+  doc.font('body').fontSize(9.4).fillColor(COLORS.blue)
+  drawFauxBoldText(doc, `依据：${finding.evidence}`, 74, y + 48 + detailHeight, {
+    width: 420,
+    lineGap: 3,
+  })
+  doc.y = y + height + 4
 }
 
-function drawSimilarityMatrix(doc, rows) {
-  const x = 42
-  const width = 510
-  const columns = [118, 104, 288]
+function drawSimilarityMatrix(doc, config, rows) {
+  const x = 44
+  const columns = [112, 96, 299]
   let y = doc.y
 
-  drawPanel(doc, x, y, width, 28, '#0f172a', '#0f172a')
-  doc.font('bold').fontSize(9).fillColor('#ffffff').text('维度', x + 10, y + 9, { width: columns[0] })
-  doc.text('评估', x + columns[0] + 10, y + 9, { width: columns[1] })
-  doc.text('依据', x + columns[0] + columns[1] + 10, y + 9, { width: columns[2] - 20 })
-  y += 28
+  drawPanel(doc, x, y, PAGE.contentWidth, 30, COLORS.ink, COLORS.ink, 8)
+  doc.font('bold').fontSize(9.5).fillColor(COLORS.white).text('维度', x + 10, y + 10, { width: columns[0] })
+  doc.text('评估', x + columns[0] + 10, y + 10, { width: columns[1] })
+  doc.text('依据', x + columns[0] + columns[1] + 10, y + 10, { width: columns[2] - 20 })
+  y += 30
 
   rows.forEach((row) => {
-    const rowHeight = Math.max(44, doc.heightOfString(row.evidence, { width: columns[2] - 20, lineGap: 3 }) + 22)
-    ensurePageSpace(doc, rowHeight + 6)
-    drawPanel(doc, x, y, width, rowHeight, '#ffffff', '#e5eaf3')
-    doc.font('bold').fontSize(9).fillColor(COLORS.ink).text(row.dimension, x + 10, y + 12, { width: columns[0] - 16 })
-    doc.font('bold').fontSize(9).fillColor(levelColor(row.level)).text(row.assessment, x + columns[0] + 10, y + 12, { width: columns[1] - 16 })
-    doc.font('body').fontSize(8.5).fillColor(COLORS.muted).text(row.evidence, x + columns[0] + columns[1] + 10, y + 12, { width: columns[2] - 20, lineGap: 3 })
+    const rowHeight = Math.max(50, doc.heightOfString(row.evidence, { width: columns[2] - 20, lineGap: 4 }) + 24)
+    if (y + rowHeight > PAGE.bottom) {
+      doc.y = y
+      ensureSpace(doc, config, rowHeight + 42, REPORT_SECTION_TITLES[1], 'Similarity assessment continued')
+      y = doc.y
+    }
+    drawPanel(doc, x, y, PAGE.contentWidth, rowHeight, COLORS.white, COLORS.line, 0)
+    doc.font('bold').fontSize(9.7).fillColor(COLORS.ink)
+    drawFauxBoldText(doc, row.dimension, x + 10, y + 13, { width: columns[0] - 16, fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth })
+    doc.font('bold').fontSize(9.7).fillColor(levelColor(row.level))
+    drawFauxBoldText(doc, row.assessment, x + columns[0] + 10, y + 13, { width: columns[1] - 16, fauxBoldStrokeWidth: TYPOGRAPHY.titleStrokeWidth })
+    doc.font('body').fontSize(9.7).fillColor(COLORS.body)
+    drawFauxBoldText(doc, row.evidence, x + columns[0] + columns[1] + 10, y + 13, {
+      width: columns[2] - 20,
+      lineGap: 4,
+    })
     y += rowHeight
   })
 
-  doc.y = y + 10
+  doc.y = y + 16
 }
 
-function drawCandidateCard(doc, candidate, index) {
-  const x = 42
-  const y = doc.y
-  const width = 510
-  const height = 108
-  drawPanel(doc, x, y, width, height, '#ffffff', COLORS.line)
-
-  doc.circle(x + 18, y + 20, 11).fill(COLORS.blue)
-  doc.font('bold').fontSize(9).fillColor('#ffffff').text(String(index + 1), x + 13, y + 15, { width: 10, align: 'center' })
-  doc.font('bold').fontSize(12).fillColor(COLORS.ink).text(candidate.wordmark || '未命名商标', x + 38, y + 12, { width: 300 })
-  drawSmallBadge(doc, x + 408, y + 12, candidate.status || 'UNKNOWN', candidate.status === 'LIVE' ? 'green' : 'amber')
-
-  doc.font('body').fontSize(8.5).fillColor(COLORS.muted)
-  doc.text(`Serial: ${candidate.serialNumber || '-'}    Registration: ${candidate.registrationNumber || '-'}`, x + 38, y + 36, { width: 450 })
-  doc.text(`Owner: ${candidate.ownerName || '-'}`, x + 38, y + 51, { width: 450 })
-  doc.text(`Goods/Services: ${truncate(candidate.goodsAndServices || '-', 220)}`, x + 38, y + 66, { width: 450 })
-  if (candidate.sourceUrl) {
-    doc.fillColor(COLORS.blue).text(`TSDR: ${truncate(candidate.sourceUrl, 125)}`, x + 38, y + 86, { width: 450 })
-  }
-
-  doc.y = y + height + 12
-}
-
-function drawRiskItem(doc, item, index) {
-  ensurePageSpace(doc, 76)
+function drawRiskItem(doc, config, item, index) {
+  const detail = item.detail || '建议人工复核该风险点。'
+  const height = Math.max(76, doc.heightOfString(detail, { width: 392, lineGap: 4 }) + 44)
+  ensureSpace(doc, config, height + 8, REPORT_SECTION_TITLES[2], 'Risk analysis continued')
   const y = doc.y
   const level = item.level || 'medium'
-  const height = Math.max(68, doc.heightOfString(item.detail || '', { width: 410, lineGap: 4 }) + 40)
-  drawPanel(doc, 42, y, 510, height, '#ffffff', COLORS.line)
-  doc.font('bold').fontSize(10).fillColor(COLORS.ink)
-    .text(`${index + 1}. ${item.title || '风险提示'}`, 58, y + 14, { width: 330 })
-  drawSmallBadge(doc, 462, y + 12, item.levelText || levelText(level), level)
-  doc.font('body').fontSize(9).fillColor(COLORS.muted)
-    .text(item.detail || '建议人工复核该风险点。', 58, y + 34, { width: 430, lineGap: 4 })
+
+  drawPanel(doc, 44, y, PAGE.contentWidth, height, COLORS.white, COLORS.line)
+  doc.font('bold').fontSize(10.7).fillColor(COLORS.ink)
+    .text(`${index + 1}. ${item.title || '风险提示'}`, 62, y + 16, { width: 330 })
+  drawSmallBadge(doc, 462, y + 14, item.levelText || levelText(level), level)
+  doc.font('body').fontSize(10.2).fillColor(COLORS.body)
+  drawFauxBoldText(doc, detail, 62, y + 40, { width: 430, lineGap: 4 })
   doc.y = y + height + 12
 }
 
-function drawActionPlan(doc, suggestions) {
-  const list = normalizeList(suggestions)
-  const fallback = [
+function drawCandidateSummary(doc, config, candidate, index) {
+  const goods = truncate(candidate.goodsAndServices || '-', 170)
+  const height = Math.max(82, doc.heightOfString(goods, { width: 420, lineGap: 3 }) + 52)
+  ensureSpace(doc, config, height + 8, REPORT_SECTION_TITLES[2], 'Candidate trademark review continued')
+  const y = doc.y
+
+  drawPanel(doc, 44, y, PAGE.contentWidth, height, COLORS.white, COLORS.line)
+  doc.circle(62, y + 20, 11).fill(COLORS.blue)
+  doc.font('bold').fontSize(9).fillColor(COLORS.white).text(String(index + 1), 57, y + 14, { width: 10, align: 'center' })
+  doc.font('bold').fontSize(11).fillColor(COLORS.ink).text(candidate.wordmark || '未命名商标', 84, y + 12, { width: 280 })
+  drawSmallBadge(doc, 462, y + 12, candidate.status || 'UNKNOWN', candidate.status === 'LIVE' ? 'green' : 'amber')
+  doc.font('body').fontSize(9.4).fillColor(COLORS.muted)
+  drawFauxBoldText(doc, `Serial: ${candidate.serialNumber || '-'}    Registration: ${candidate.registrationNumber || '-'}`, 84, y + 34, { width: 420 })
+  drawFauxBoldText(doc, `Owner: ${candidate.ownerName || '-'}`, 84, y + 49, { width: 420 })
+  doc.fillColor(COLORS.body)
+  drawFauxBoldText(doc, `Goods/Services: ${goods}`, 84, y + 64, { width: 420, lineGap: 3 })
+  doc.y = y + height + 12
+}
+
+function drawActionPlan(doc, config, suggestions) {
+  const actions = normalizeList(suggestions).length ? normalizeList(suggestions) : [
     '暂缓发布或下架高风险素材，先完成图片、文字和关键词修改。',
     '补充原创设计、供应商授权和平台页面修改前后截图。',
     '高风险SKU建议交给知识产权律师复核后再恢复销售。',
   ]
-  const actions = list.length ? list : fallback
 
-  actions.forEach((item, index) => {
-    ensurePageSpace(doc, 52)
+  actions.slice(0, 5).forEach((action, index) => {
+    const height = Math.max(48, doc.heightOfString(action, { width: 426, lineGap: 4 }) + 24)
+    ensureSpace(doc, config, height + 8, REPORT_SECTION_TITLES[2], 'Action plan continued')
     const y = doc.y
-    doc.roundedRect(42, y, 510, 44, 10).fill(index === 0 ? COLORS.redSoft : COLORS.soft)
-    doc.circle(60, y + 22, 10).fill(index === 0 ? COLORS.red : COLORS.blue)
-    doc.font('bold').fontSize(8).fillColor('#ffffff').text(String(index + 1), 55, y + 17, { width: 10, align: 'center' })
-    doc.font('body').fontSize(9.5).fillColor(COLORS.ink).text(item, 82, y + 13, { width: 450, lineGap: 4 })
-    doc.y = y + 54
+    drawPanel(doc, 44, y, PAGE.contentWidth, height, index === 0 ? COLORS.redSoft : COLORS.faint, index === 0 ? '#fecaca' : COLORS.line)
+    doc.circle(62, y + 22, 10).fill(index === 0 ? COLORS.red : COLORS.blue)
+    doc.font('bold').fontSize(8.5).fillColor(COLORS.white).text(String(index + 1), 57, y + 16, { width: 10, align: 'center' })
+    doc.font('body').fontSize(10.4).fillColor(COLORS.body)
+    drawFauxBoldText(doc, action, 84, y + 13, { width: 426, lineGap: 4 })
+    doc.y = y + height + 10
   })
 }
 
-function drawChecklist(doc, items) {
+function drawChecklist(doc, config, items) {
   normalizeList(items).forEach((item) => {
-    ensurePageSpace(doc, 36)
+    const height = Math.max(36, doc.heightOfString(item, { width: 450, lineGap: 4 }) + 12)
+    ensureSpace(doc, config, height + 6, REPORT_SECTION_TITLES[3], 'Evidence checklist continued')
     const y = doc.y
-    doc.roundedRect(42, y, 18, 18, 4).strokeColor(COLORS.blue).lineWidth(1).stroke()
-    doc.moveTo(46, y + 10).lineTo(50, y + 14).lineTo(56, y + 5).strokeColor(COLORS.blue).lineWidth(1.3).stroke()
-    doc.font('body').fontSize(10).fillColor(COLORS.ink).text(item, 72, y, { width: 460, lineGap: 4 })
-    doc.y = y + Math.max(34, doc.heightOfString(item, { width: 460, lineGap: 4 }) + 10)
+    doc.roundedRect(46, y + 2, 18, 18, 4).strokeColor(COLORS.blue).lineWidth(1.3).stroke()
+    doc.moveTo(50, y + 12).lineTo(54, y + 16).lineTo(61, y + 7).strokeColor(COLORS.blue).lineWidth(1.4).stroke()
+    doc.font('body').fontSize(10.7).fillColor(COLORS.body)
+    drawFauxBoldText(doc, item, 76, y, { width: 450, lineGap: 4 })
+    doc.y = y + height + 6
   })
 }
 
-function drawProcessSteps(doc, steps) {
+function drawProcessSteps(doc, config, steps) {
   steps.forEach(([mark, title, desc]) => {
-    ensurePageSpace(doc, 62)
+    const descHeight = doc.heightOfString(desc, { width: 410, lineGap: 4 })
+    const height = Math.max(62, descHeight + 34)
+    ensureSpace(doc, config, height + 8, REPORT_SECTION_TITLES[3], 'Review path continued')
     const y = doc.y
-    doc.circle(58, y + 18, 15).fill(COLORS.blue)
-    doc.font('bold').fontSize(10).fillColor('#ffffff').text(mark, 51, y + 11, { width: 14, align: 'center' })
-    doc.font('bold').fontSize(10).fillColor(COLORS.ink).text(title, 88, y + 2, { width: 420 })
-    doc.font('body').fontSize(9).fillColor(COLORS.muted).text(desc, 88, y + 20, { width: 420, lineGap: 4 })
-    doc.y = y + 58
+    doc.circle(60, y + 19, 15).fill(COLORS.blue)
+    doc.font('bold').fontSize(10).fillColor(COLORS.white).text(mark, 53, y + 12, { width: 14, align: 'center' })
+    doc.font('bold').fontSize(10.8).fillColor(COLORS.ink).text(title, 88, y + 2, { width: 420 })
+    doc.font('body').fontSize(10).fillColor(COLORS.body)
+    drawFauxBoldText(doc, desc, 88, y + 23, { width: 420, lineGap: 4 })
+    doc.y = y + height + 8
   })
 }
 
-function sectionTitle(doc, text, x, y) {
-  doc.font('bold').fontSize(14).fillColor(COLORS.ink).text(text, x, y)
-  doc.moveTo(x, y + 22).lineTo(x + 510, y + 22).strokeColor(COLORS.line).lineWidth(1).stroke()
-}
-
-function sectionSubtitle(doc, text) {
-  ensurePageSpace(doc, 38)
-  doc.font('bold').fontSize(12).fillColor(COLORS.ink).text(text, 42, doc.y)
-  doc.moveDown(0.45)
-}
-
-function drawPanel(doc, x, y, width, height, fill, stroke) {
+function drawPanel(doc, x, y, width, height, fill, stroke, radius) {
+  const r = typeof radius === 'number' ? radius : 9
   doc.save()
-  doc.roundedRect(x, y, width, height, 10).fill(fill || '#ffffff')
-  doc.roundedRect(x, y, width, height, 10).strokeColor(stroke || COLORS.line).lineWidth(1).stroke()
+  doc.roundedRect(x, y, width, height, r).fill(fill || COLORS.white)
+  doc.roundedRect(x, y, width, height, r).strokeColor(stroke || COLORS.line).lineWidth(1).stroke()
   doc.restore()
+}
+
+function drawFauxBoldText(doc, text, x, y, options) {
+  const drawOptions = Object.assign({}, options || {})
+  const strokeWidth = typeof drawOptions.fauxBoldStrokeWidth === 'number'
+    ? drawOptions.fauxBoldStrokeWidth
+    : TYPOGRAPHY.bodyStrokeWidth
+  const strokeColor = drawOptions.fauxBoldStrokeColor || COLORS.body
+  delete drawOptions.fauxBoldStrokeWidth
+  delete drawOptions.fauxBoldStrokeColor
+
+  doc.save()
+  doc.lineWidth(strokeWidth)
+  doc.strokeColor(strokeColor)
+  doc.text(text, x, y, Object.assign({}, drawOptions, {
+    fill: true,
+    stroke: strokeWidth > 0,
+  }))
+  const afterY = doc.y
+  doc.restore()
+  doc.y = afterY
+}
+
+function installBuiltinFontFallback(doc) {
+  const originalFont = doc.font.bind(doc)
+  const originalText = doc.text.bind(doc)
+
+  doc.font = (fontName, ...args) => {
+    if (fontName === 'body') return originalFont('Helvetica', ...args)
+    if (fontName === 'bold') return originalFont('Helvetica-Bold', ...args)
+    return originalFont(fontName, ...args)
+  }
+
+  doc.text = (text, ...args) => originalText(sanitizeBuiltinFontText(text), ...args)
+}
+
+function sanitizeBuiltinFontText(value) {
+  const text = String(value == null ? '' : value)
+  const ascii = text
+    .replace(/[^\x09\x0a\x0d\x20-\x7e]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
+  return ascii || '-'
 }
 
 function drawSmallBadge(doc, x, y, text, level) {
   const color = levelColor(level)
   const soft = levelSoftColor(level)
   doc.save()
-  doc.roundedRect(x, y, 74, 22, 11).fill(soft)
-  doc.font('bold').fontSize(8).fillColor(color).text(String(text || '-'), x + 8, y + 7, { width: 58, align: 'center' })
+  doc.roundedRect(x, y, 70, 23, 11).fill(soft)
+  doc.font('bold').fontSize(8.5).fillColor(color).text(String(text || '-'), x + 8, y + 7, {
+    width: 54,
+    align: 'center',
+  })
   doc.restore()
 }
 
-function ensurePageSpace(doc, needed, title, subtitle) {
-  if (doc.y + needed < doc.page.height - 58) return
+function ensureSpace(doc, config, needed, title, subtitle) {
+  if (doc.y + needed < PAGE.bottom) return
   drawFooter(doc, 'Continued report section')
-  doc.addPage()
-  pageHeader(doc, title || '报告续页', subtitle || 'Continued')
+  if (config) {
+    addSectionPage(doc, config, title || '报告续页', subtitle || 'Continued')
+  } else {
+    doc.addPage()
+  }
+}
+
+function drawFooter(doc, label) {
+  const y = doc.page.height - 52
+  const previousY = doc.y
+  doc.moveTo(44, y - 8).lineTo(551, y - 8).strokeColor('#e5eaf3').lineWidth(1).stroke()
+  doc.font('body').fontSize(8.3).fillColor('#64748b').text(label, 44, y, {
+    width: 360,
+    height: 12,
+    lineBreak: false,
+  })
+  doc.y = previousY
 }
 
 function getRiskLevel(result) {
-  const score = Number(result && result.score || 0)
+  const score = clampScore(result && result.score)
   const key = score >= 75 ? 'high' : score >= 45 ? 'medium' : 'low'
   return {
     key,
@@ -650,20 +1038,77 @@ function formatMode(mode) {
   return map[mode] || mode
 }
 
-function fetchImageBuffer(urlString) {
+async function resolveCandidateImage(candidate) {
+  const sources = buildCandidateImageSources(candidate)
+  for (const source of sources) {
+    try {
+      const buffer = await fetchImageBuffer(source.url)
+      if (buffer) return { buffer, source }
+    } catch (error) {
+      // Try the next trusted candidate image source.
+    }
+  }
+  return null
+}
+
+function buildCandidateImageSources(candidate) {
+  const item = candidate || {}
+  const sources = []
+  if (Array.isArray(item.markImageSources)) {
+    item.markImageSources.forEach((source) => {
+      if (source && source.url) {
+        sources.push({
+          label: source.label || item.markImageSourceLabel || 'USPTO/TSDR official record image',
+          trust: source.trust || item.markImageSourceTrust || 'official-public',
+          url: source.url,
+        })
+      }
+    })
+  }
+  if (item.markImageUrl) {
+    sources.push({
+      label: item.markImageSourceLabel || 'USPTO/TSDR official record image',
+      trust: item.markImageSourceTrust || 'official-public',
+      url: item.markImageUrl,
+    })
+  }
+
+  const seen = new Set()
+  return sources.filter((source) => {
+    const key = String(source.url || '').trim()
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function fetchImageBuffer(urlString, redirectCount) {
   const value = String(urlString || '').trim()
   if (!value) return Promise.resolve(null)
 
   const url = new URL(value)
   const client = url.protocol === 'http:' ? http : https
+  const redirects = Number(redirectCount) || 0
 
   return new Promise((resolve, reject) => {
     const req = client.get({
       hostname: url.hostname,
+      port: url.port || undefined,
       path: `${url.pathname}${url.search}`,
-      headers: { 'user-agent': 'Mozilla/5.0 (compatible; GGKJ-IP-Risk/1.0)' },
+      headers: {
+        accept: 'image/*,*/*;q=0.8',
+        'user-agent': 'Mozilla/5.0 (compatible; GGKJ-IP-Risk/1.0)',
+      },
       timeout: 7000,
     }, (res) => {
+      const headers = res.headers || {}
+      if ([301, 302, 303, 307, 308].includes(res.statusCode) && headers.location && redirects < 3) {
+        res.resume()
+        const nextUrl = new URL(headers.location, url).toString()
+        fetchImageBuffer(nextUrl, redirects + 1).then(resolve).catch(reject)
+        return
+      }
+
       if (res.statusCode < 200 || res.statusCode >= 300) {
         res.resume()
         reject(new Error(`image status ${res.statusCode}`))
@@ -671,8 +1116,23 @@ function fetchImageBuffer(urlString) {
       }
 
       const chunks = []
-      res.on('data', (chunk) => chunks.push(chunk))
-      res.on('end', () => resolve(Buffer.concat(chunks)))
+      let total = 0
+      res.on('data', (chunk) => {
+        total += chunk.length
+        if (total > MAX_IMAGE_BYTES) {
+          req.destroy(new Error('image response too large'))
+          return
+        }
+        chunks.push(chunk)
+      })
+      res.on('end', () => {
+        const buffer = Buffer.concat(chunks)
+        if (!isSupportedImageBuffer(buffer, headers['content-type'])) {
+          reject(new Error('image response is not a supported image'))
+          return
+        }
+        resolve(buffer)
+      })
     })
 
     req.on('timeout', () => {
@@ -680,6 +1140,15 @@ function fetchImageBuffer(urlString) {
     })
     req.on('error', reject)
   })
+}
+
+function isSupportedImageBuffer(buffer, contentType) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 8) return false
+  const type = String(contentType || '').toLowerCase()
+  const hasImageType = !type || type.includes('image/')
+  const isPng = buffer.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8
+  return hasImageType && (isPng || isJpeg)
 }
 
 function pickFontPath(preferredPath) {
@@ -691,6 +1160,14 @@ function pickFontPath(preferredPath) {
       return false
     }
   })
+}
+
+function readOptionalFile(filePath) {
+  try {
+    return filePath && fs.existsSync(filePath) ? fs.readFileSync(filePath) : null
+  } catch (error) {
+    return null
+  }
 }
 
 function first(values) {
@@ -710,11 +1187,37 @@ function normalizeList(values) {
 function truncate(value, maxLength) {
   const text = String(value || '')
   if (text.length <= maxLength) return text
-  return `${text.slice(0, maxLength - 1)}…`
+  return `${text.slice(0, maxLength - 1)}...`
+}
+
+function clampScore(score) {
+  const value = Number(score)
+  if (Number.isNaN(value)) return 45
+  return Math.max(0, Math.min(100, Math.round(value)))
+}
+
+function formatReportSource(source) {
+  const normalized = String(source || '').trim()
+  if (!normalized || normalized === 'ai-cloud-function' || normalized === 'ai-cloud-fallback') {
+    return '港港跨境知识产权检测'
+  }
+
+  return normalized
+}
+
+function formatNow() {
+  const date = new Date()
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 module.exports = {
+  REPORT_SECTION_TITLES,
+  TYPOGRAPHY,
+  WATERMARK_PATH,
+  buildCandidateReferenceSummary,
   buildSimilarityMatrix,
   buildVisualEvidenceFindings,
+  formatReportSource,
   generatePdfReportBuffer,
 }

@@ -7,6 +7,7 @@ const {
   detectRisk,
 } = require('../../services/riskEngine')
 const {
+  deleteReportById,
   getRecentReports,
   saveDetectionReport,
 } = require('../../services/reportStore')
@@ -155,14 +156,19 @@ Page({
     this.setData({ loading: true })
 
     getImageUploadService().uploadDetectionImages(payload.imageFiles)
-      .then((imageFileIDs) => detectRisk(this.buildDetectionPayload(payload, imageFileIDs)))
-      .then((result) => {
-        const reportPayload = this.buildDetectionPayload(payload, [])
-        saveDetectionReport(reportPayload, result, {
+      .then((imageFileIDs) => {
+        const detectionPayload = this.buildDetectionPayload(payload, imageFileIDs)
+        return detectRisk(detectionPayload).then((result) => ({
+          detectionPayload,
+          result,
+        }))
+      })
+      .then(({ detectionPayload, result }) => {
+        saveDetectionReport(detectionPayload, result, {
           modeLabel: this.data.activeModeLabel,
         })
         this.setData({
-          result,
+          result: null,
           recentReports: getRecentReports(null, DETECT_REPORT_PREVIEW_LIMIT),
           loading: false,
         })
@@ -175,10 +181,10 @@ Page({
         })
       })
   },
-  viewPdfReport() {
+  viewReportPdf(event) {
     if (this.data.pdfOpening) return
 
-    const fileID = this.data.result && this.data.result.pdfReportFileID
+    const fileID = event.currentTarget.dataset.fileId
     if (!fileID) {
       wx.showToast({
         title: '暂无PDF报告',
@@ -220,6 +226,11 @@ Page({
       })
     })
   },
+  openReportList() {
+    wx.navigateTo({
+      url: '/pages/profile-reports/profile-reports',
+    })
+  },
   openReportDetail(event) {
     const id = event.currentTarget.dataset.id
     if (!id) return
@@ -228,9 +239,25 @@ Page({
       url: `/pages/report-detail/report-detail?id=${encodeURIComponent(id)}`,
     })
   },
-  openReportList() {
-    wx.navigateTo({
-      url: '/pages/profile-reports/profile-reports',
+  confirmDeleteReport(event) {
+    const id = event.currentTarget.dataset.id
+    if (!id) return
+
+    wx.showModal({
+      title: '删除报告',
+      content: '删除后仅移除本机保存的检测记录，已生成的云端PDF文件不会被删除。',
+      confirmText: '删除',
+      confirmColor: '#dc2626',
+      success: (res) => {
+        if (!res.confirm) return
+
+        const removed = deleteReportById(id)
+        this.loadRecentReports()
+        wx.showToast({
+          title: removed ? '已删除' : '报告不存在',
+          icon: removed ? 'success' : 'none',
+        })
+      },
     })
   },
   hasInput(payload) {

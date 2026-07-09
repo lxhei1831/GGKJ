@@ -69,6 +69,10 @@ async function run() {
                 wordmark: 'KALA',
                 serialNumber: '8575079',
               }],
+              visualFindings: [{
+                title: 'AI定位区域',
+                userRegion: { x: 0.2, y: 0.2, w: 0.5, h: 0.2 },
+              }],
               usptoWarnings: ['sample warning'],
             },
           },
@@ -81,7 +85,33 @@ async function run() {
   assert.strictEqual(mergedResult.pdfReportCloudPath, 'risk-reports/kala.pdf', 'merged AI detection result should keep the generated PDF cloud path')
   assert.strictEqual(mergedResult.canPublish, false, 'merged AI detection result should keep the model publish decision')
   assert.strictEqual(mergedResult.trademarkCandidates[0].wordmark, 'KALA', 'merged AI detection result should keep USPTO candidates for the page and history')
+  assert.strictEqual(mergedResult.visualFindings[0].title, 'AI定位区域', 'merged AI detection result should keep adaptive visual findings')
   assert.strictEqual(mergedResult.usptoWarnings[0], 'sample warning', 'merged AI detection result should keep USPTO warnings')
+
+  const noPdfResult = await detectRisk({
+    platform: 'Amazon',
+    countryRegion: '美国',
+    productTitle: 'Generic lamp',
+  }, {
+    cloud: {
+      callFunction() {
+        return Promise.resolve({
+          result: {
+            ok: true,
+            data: {
+              score: 48,
+              riskItems: [],
+              suggestions: ['Review before publishing.'],
+              jurisdiction: 'Amazon / US',
+              canPublish: true,
+            },
+          },
+        })
+      },
+    },
+  })
+
+  assert(noPdfResult.pdfReportError.includes('pdfReportFileID'), 'remote risk results without a PDF file ID should explain that the cloud function did not return a PDF')
 
   const fallbackResult = await detectRisk({
     platform: 'Amazon',
@@ -96,6 +126,7 @@ async function run() {
 
   assert.strictEqual(fallbackResult.modelFallback, true, 'detectRisk should keep local scoring when the cloud function fails')
   assert.strictEqual(fallbackResult.source, 'local-rule-fallback', 'fallback result should identify the local fallback source')
+  assert(fallbackResult.pdfReportError.includes('cloud unavailable'), 'fallback result should explain why no PDF report was generated')
   assert(
     fallbackResult.suggestions[0].startsWith('[本地规则]'),
     'fallback result should clearly label the first visible suggestion as local rules'

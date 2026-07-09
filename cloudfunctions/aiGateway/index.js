@@ -1,9 +1,6 @@
 const cloud = require('wx-server-sdk')
-const fs = require('fs')
 const https = require('https')
 const http = require('http')
-const os = require('os')
-const path = require('path')
 const {
   searchUsptoTrademarks,
   shouldSearchUspto,
@@ -25,8 +22,7 @@ exports.main = async (event) => {
     const task = normalizeTask(event && (event.task || event.scene))
     const input = event && (event.input || event.payload || {})
     const context = await buildTaskContext(task, input)
-    const modelResult = await requestModel(task, input, context)
-    const data = normalizeTaskResult(task, modelResult, input)
+    const data = await buildTaskData(task, input, context)
 
     return {
       ok: true,
@@ -44,13 +40,18 @@ exports.main = async (event) => {
 }
 
 async function buildTaskContext(task, input) {
-  const imageUrls = await resolveImageUrls(input)
   const context = {
-    imageUrls,
+    imageUrls: [],
     trademarkSignals: null,
     trademarkSearchTerms: [],
     trademarkCandidates: [],
     warnings: [],
+  }
+
+  try {
+    context.imageUrls = await resolveImageUrls(input)
+  } catch (error) {
+    context.warnings.push(`图片临时链接解析失败：${error.message || 'unknown error'}`)
   }
 
   if (task !== 'risk_detect' || !shouldSearchUspto(input)) {
@@ -71,6 +72,20 @@ async function buildTaskContext(task, input) {
   context.warnings = context.warnings.concat(usptoResult.warnings || [])
 
   return context
+}
+
+async function buildTaskData(task, input, context) {
+  try {
+    const modelResult = await requestModel(task, input, context)
+    return normalizeTaskResult(task, modelResult, input)
+  } catch (error) {
+    if (task === 'risk_detect') {
+      context.warnings.push(`AI风险检测暂时失败：${error.message || 'unknown error'}`)
+      return buildFallbackRiskDetectionResult(input, error)
+    }
+
+    throw error
+  }
 }
 
 async function enrichTaskResponse(task, data, input, context) {
@@ -124,8 +139,9 @@ async function requestTrademarkSignals(input, imageUrls) {
           '你是商标检索线索提取助手。',
           '根据用户上传的图片、标题、关键词和说明，提取适合去 USPTO 检索的商标词、图形元素、颜色和构图。',
           '只返回一个JSON对象，不要返回Markdown或额外解释。',
-          'JSON字段包含: wordMarks, searchTerms, visualElements, colors, composition。',
-          '每个字段都是字符串数组，最多8项；无法识别时返回空数组。',
+          'JSON字段包含: wordMarks, searchTerms, visualElements, colors, composition, markRegions。',
+          '除markRegions外，每个字段都是字符串数组，最多8项；无法识别时返回空数组。',
+          'markRegions为数组，最多4项；每项包含label、type、region、confidence，region使用0到1之间的归一化坐标{x,y,w,h}，定位用户上传图中的商标词、Logo或核心图形。',
         ].join('\n'),
       },
       {
@@ -198,8 +214,10 @@ function getTaskConfig(task) {
         '如果输入中包含USPTO候选商标和官方商标图，请把用户上传图与官方候选图进行近似度对比，重点判断文字、构图、图形元素、商品类别和实际使用场景。',
         '输出要谨慎表述为风险初筛，不要宣称已经构成法律意义上的最终侵权。',
         '只返回一个JSON对象，不要返回Markdown、代码块或额外解释。',
-        'JSON字段必须包含: score, riskItems, suggestions, jurisdiction, canPublish。',
+        'JSON字段必须包含: score, riskItems, suggestions, jurisdiction, canPublish, visualFindings。',
         'score为0到100的数字；riskItems为数组，每项包含title、detail、level，level只能是low、medium、high；suggestions为字符串数组；canPublish为布尔值。',
+        'visualFindings为0到4项数组，用于PDF自适应红框；每项包含title、detail、evidence、level、confidence、userRegion、officialRegion。',
+        'userRegion是用户上传图中的疑似侵权区域，officialRegion是候选权利图中的对应区域；坐标必须是0到1之间的归一化{x,y,w,h}。无法可靠定位时返回空数组，不要编造固定坐标。',
     ].join('\n'),
   }
 }
@@ -258,9 +276,11 @@ function buildPromptInput(input, context) {
       markDrawingCode: candidate.markDrawingCode,
       designSearchCode: candidate.designSearchCode,
       markImageUrl: candidate.markImageUrl,
+      markImageSourceLabel: candidate.markImageSourceLabel,
+      markImageSourceTrust: candidate.markImageSourceTrust,
       sourceUrl: candidate.sourceUrl,
     }))
-    promptInput.officialTrademarkImageStatus = 'USPTO candidate mark images are attached after the user uploaded images when markImageUrl is available'
+    promptInput.officialTrademarkImageStatus = 'USPTO/TSDR official record images are attached after the user uploaded images when markImageUrl is available'
   }
 
   if (context && Array.isArray(context.warnings) && context.warnings.length) {
@@ -351,7 +371,44 @@ function normalizeRiskDetectionResult(result, input) {
     ],
     jurisdiction: result.jurisdiction || `${input.platform || '平台'} / ${input.countryRegion || '目标市场'}`,
     canPublish: typeof result.canPublish === 'boolean' ? result.canPublish : score < 45,
+    visualFindings: normalizeVisualFindings(result.visualFindings),
     source: 'ai-cloud-function',
+  }
+}
+
+function buildFallbackRiskDetectionResult(input, error) {
+  const hasImage = Boolean(
+    Number(input && input.imageCount || 0) ||
+    (Array.isArray(input && input.imageFileIDs) && input.imageFileIDs.length) ||
+    (Array.isArray(input && input.imageUrls) && input.imageUrls.length)
+  )
+  const score = hasImage ? 58 : 48
+  const reason = error && error.message ? error.message : 'unknown error'
+
+  return {
+    score,
+    riskItems: [{
+      title: 'AI检测暂时不可用',
+      detail: `本次远程AI检测未完成（${reason}）。系统已生成保守初筛报告，请结合上传素材、平台规则和人工复核继续判断。`,
+      level: hasImage ? 'medium' : 'low',
+    }, {
+      title: hasImage ? '图片材料已进入人工复核建议' : '材料信息不足',
+      detail: hasImage
+        ? '已收到上传图片，但模型分析暂时不可用。建议优先复核Logo、文字商标、包装图案、角色元素和外观设计相似度。'
+        : '建议补充商品标题、品牌词、主图、细节图和目标市场后重新检测。',
+      level: hasImage ? 'medium' : 'low',
+    }],
+    suggestions: [
+      '暂缓直接上架高价值或疑似品牌关联素材，先完成人工商标、版权和外观设计复核。',
+      '保留原图、设计源文件、授权链路、供应商证明和修改前后对比图。',
+      'AI接口恢复后建议重新检测，以获得更完整的模型分析和候选权利对比。',
+    ],
+    jurisdiction: `${input.platform || '平台'} / ${input.countryRegion || '目标市场'}`,
+    canPublish: false,
+    source: 'ai-cloud-fallback',
+    modelFallback: true,
+    modelError: reason,
+    visualFindings: [],
   }
 }
 
@@ -396,6 +453,7 @@ function normalizeTrademarkSignals(result) {
     visualElements: normalizeStringArray(result && result.visualElements).slice(0, 8),
     colors: normalizeStringArray(result && result.colors).slice(0, 8),
     composition: normalizeStringArray(result && result.composition).slice(0, 8),
+    markRegions: normalizeMarkRegions(result && result.markRegions).slice(0, 4),
   }
 }
 
@@ -427,26 +485,19 @@ async function uploadPdfReport(pdfBuffer) {
   const random = Math.random().toString(36).slice(2, 10)
   const fileName = `risk-report-${timestamp}-${random}.pdf`
   const cloudPath = `risk-reports/${fileName}`
-  const tempPath = path.join(os.tmpdir(), fileName)
 
-  fs.writeFileSync(tempPath, pdfBuffer)
+  const result = await cloud.uploadFile({
+    cloudPath,
+    fileContent: pdfBuffer,
+  })
 
-  try {
-    const result = await cloud.uploadFile({
-      cloudPath,
-      fileContent: fs.createReadStream(tempPath),
-    })
+  if (!result || !result.fileID) {
+    throw new Error('PDF upload did not return fileID')
+  }
 
-    return {
-      pdfReportFileID: result.fileID,
-      pdfReportCloudPath: cloudPath,
-    }
-  } finally {
-    try {
-      fs.unlinkSync(tempPath)
-    } catch (error) {
-      // The temp file is best-effort cleanup only.
-    }
+  return {
+    pdfReportFileID: result.fileID,
+    pdfReportCloudPath: cloudPath,
   }
 }
 
@@ -555,6 +606,67 @@ function normalizeRiskItem(item) {
   }
 }
 
+function normalizeVisualFindings(value) {
+  if (!Array.isArray(value)) return []
+  return value.map((item, index) => {
+    if (!item) return null
+    const userRegion = normalizeRegion(item.userRegion || item.region)
+    const officialRegion = normalizeRegion(item.officialRegion)
+    if (!userRegion && !officialRegion) return null
+
+    return {
+      title: String(item.title || `疑似侵权区域 ${index + 1}`).trim(),
+      detail: String(item.detail || '模型定位到需要人工复核的视觉相似区域。').trim(),
+      evidence: String(item.evidence || '该区域由AI根据上传图与候选权利图的相似点生成。').trim(),
+      level: normalizeLevel(item.level),
+      confidence: normalizeConfidence(item.confidence),
+      userRegion,
+      officialRegion,
+    }
+  }).filter(Boolean).slice(0, 4)
+}
+
+function normalizeMarkRegions(value) {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => {
+    if (!item) return null
+    const region = normalizeRegion(item.region || item.userRegion)
+    if (!region) return null
+
+    return {
+      label: String(item.label || item.title || '商标/Logo区域').trim(),
+      type: String(item.type || 'logo').trim(),
+      confidence: normalizeConfidence(item.confidence),
+      region,
+    }
+  }).filter(Boolean)
+}
+
+function normalizeRegion(region) {
+  if (!region) return null
+  const x = Number(region.x)
+  const y = Number(region.y)
+  const w = Number(region.w)
+  const h = Number(region.h)
+  if ([x, y, w, h].some((item) => Number.isNaN(item))) return null
+  if (w <= 0 || h <= 0) return null
+
+  const safeX = clampUnit(x)
+  const safeY = clampUnit(y)
+  return {
+    x: roundUnit(safeX),
+    y: roundUnit(safeY),
+    w: roundUnit(Math.min(clampUnit(w), 1 - safeX)),
+    h: roundUnit(Math.min(clampUnit(h), 1 - safeY)),
+  }
+}
+
+function normalizeConfidence(value) {
+  const score = Number(value)
+  if (Number.isNaN(score)) return undefined
+  return roundUnit(clampUnit(score))
+}
+
 function normalizeTask(task) {
   if (task === 'cross_border_ip_risk_detection' || task === 'risk_detect') return 'risk_detect'
   if (task === 'tro_advice') return 'tro_advice'
@@ -590,6 +702,14 @@ function clampScore(score) {
   const value = Number(score)
   if (Number.isNaN(value)) return 45
   return Math.max(0, Math.min(100, Math.round(value)))
+}
+
+function clampUnit(value) {
+  return Math.max(0, Math.min(1, Number(value)))
+}
+
+function roundUnit(value) {
+  return Math.round(Number(value) * 1000) / 1000
 }
 
 function trimTrailingSlash(value) {

@@ -17,6 +17,7 @@
             </view>
             <view class="report-side">
               <text class="badge badge-{{item.level}}">{{item.levelText}}</text>
+              <view class="report-delete-button" catchtap="confirmDeleteReport" data-id="{{item.id}}">删除</view>
               <text class="menu-arrow">›</text>
             </view>
           </view>

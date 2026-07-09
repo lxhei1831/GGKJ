@@ -4,6 +4,7 @@ const {
   buildTrademarkSearchTerms,
   buildUsptoSearchPayload,
   normalizeTrademarkCandidates,
+  rankTrademarkCandidates,
   shouldSearchUspto,
 } = require('../cloudfunctions/aiGateway/usptoSearch')
 
@@ -21,6 +22,12 @@ assert.deepStrictEqual(
   'search terms should prefer extracted marks, then listing title and keyword phrases'
 )
 assert(terms.length <= 8, 'term extraction should cap the number of USPTO search phrases')
+
+const titleOnlyTerms = buildTrademarkSearchTerms({
+  countryRegion: '美国',
+  productTitle: 'Blue Moon bottle logo',
+})
+assert(titleOnlyTerms.includes('Blue Moon'), 'title-only searches should derive a brand-like phrase before broad product terms')
 
 assert.strictEqual(
   shouldSearchUspto({ countryRegion: '美国', productTitle: 'Blue Moon' }),
@@ -73,5 +80,32 @@ assert.deepStrictEqual(candidates, [{
   designSearchCode: ['01.11.25'],
   score: 17.5,
   markImageUrl: 'https://tsdr.uspto.gov/img/90000001/large',
+  markImageSourceLabel: 'USPTO/TSDR official record image',
+  markImageSourceTrust: 'official-public',
+  markImageSources: [{
+    label: 'USPTO/TSDR official record image',
+    trust: 'official-public',
+    url: 'https://tsdr.uspto.gov/img/90000001/large',
+  }],
   sourceUrl: 'https://tsdr.uspto.gov/#caseNumber=90000001&caseSearchType=US_APPLICATION&caseType=DEFAULT&searchType=statusSearch',
 }], 'USPTO candidates should normalize source fields for AI and PDF use')
+
+const ranked = rankTrademarkCandidates([{
+  wordmark: 'BLUE',
+  serialNumber: '10000001',
+  status: 'ABANDONED - AFTER EX PARTE APPEAL',
+  goodsAndServices: 'Downloadable software.',
+  markDrawingCode: '4',
+  designSearchCode: [],
+  score: 99,
+}, {
+  wordmark: 'BLUE MOON',
+  serialNumber: '10000002',
+  status: 'REGISTERED',
+  goodsAndServices: 'Beer; ale; lager.',
+  markDrawingCode: '3',
+  designSearchCode: ['01.11.25'],
+  score: 70,
+}], ['Blue Moon bottle logo'])
+
+assert.strictEqual(ranked[0].wordmark, 'BLUE MOON', 'candidate ranking should prefer active exact/design matches over broad dead text hits')

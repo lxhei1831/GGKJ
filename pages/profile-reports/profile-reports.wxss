@@ -43,6 +43,18 @@ page {
   flex: none;
 }
 
+.report-delete-button {
+  margin-left: 12rpx;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid rgba(220, 38, 38, 0.18);
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1;
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
 .menu-arrow {
   margin-left: 12rpx;
   font-size: 36rpx;

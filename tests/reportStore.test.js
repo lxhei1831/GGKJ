@@ -3,6 +3,7 @@ const assert = require('assert')
 const {
   MAX_REPORTS,
   REPORT_STORAGE_KEY,
+  deleteReportById,
   getReportById,
   getRecentReports,
   saveDetectionReport,
@@ -74,6 +75,18 @@ assert.strictEqual(reports.length, 1, 'saved report should be readable from stor
 assert.deepStrictEqual(reports[0], record, 'latest report should be first')
 assert.deepStrictEqual(getReportById(record.id, storage), record, 'report storage should find a full report by ID')
 assert.strictEqual(getReportById('missing-report', storage), null, 'missing report IDs should return null')
+
+const deleteStorage = createStorage([
+  { id: 'keep-report', name: 'Keep this report' },
+  { id: 'remove-report', name: 'Remove this report' },
+])
+assert.strictEqual(deleteReportById('remove-report', deleteStorage), true, 'deleteReportById should return true when a report is removed')
+assert.deepStrictEqual(
+  getRecentReports(deleteStorage),
+  [{ id: 'keep-report', name: 'Keep this report' }],
+  'deleted reports should be removed from local storage'
+)
+assert.strictEqual(deleteReportById('missing-report', deleteStorage), false, 'deleteReportById should return false for missing reports')
 
 for (let index = 0; index < MAX_REPORTS + 2; index += 1) {
   saveDetectionReport({

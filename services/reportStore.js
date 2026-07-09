@@ -37,6 +37,25 @@ function getReportById(id, adapter) {
     .find((report) => report && report.id === reportId) || null
 }
 
+function deleteReportById(id, adapter) {
+  const reportId = String(id || '').trim()
+  if (!reportId) return false
+
+  const storage = getStorage(adapter)
+  if (!storage || typeof storage.setStorageSync !== 'function') return false
+
+  try {
+    const reports = getRecentReports(storage, MAX_REPORTS)
+    const nextReports = reports.filter((report) => report && report.id !== reportId)
+    if (nextReports.length === reports.length) return false
+
+    storage.setStorageSync(REPORT_STORAGE_KEY, nextReports)
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
 function saveDetectionReport(payload, result, options, adapter) {
   if (!result) return null
 
@@ -100,6 +119,7 @@ module.exports = {
   MAX_REPORTS,
   REPORT_STORAGE_KEY,
   createReportRecord,
+  deleteReportById,
   getReportById,
   getRecentReports,
   saveDetectionReport,
