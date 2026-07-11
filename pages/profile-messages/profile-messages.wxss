@@ -7,30 +7,16 @@ page {
 }
 
 .feature-hero-messages {
-  background:
-    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(255, 255, 255, 0) 52%, rgba(99, 102, 241, 0.1) 100%);
+  background: linear-gradient(145deg, #ffffff 0%, #f3f9ff 58%, #fff7ed 100%);
 }
 
 .empty-panel {
   padding: 34rpx 28rpx;
-  border-radius: 16rpx;
+  border-radius: 28rpx;
   text-align: center;
-  background:
-    linear-gradient(45deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0) 23%, rgba(255, 255, 255, 0) 76%, rgba(255, 255, 255, 0.58) 100%),
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86) 0%, rgba(255, 255, 255, 0) 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(248, 251, 255, 0.26) 100%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(255, 255, 255, 0) 62%, rgba(100, 116, 139, 0.08) 100%);
-  border: 1rpx double rgba(51, 65, 85, 0.16);
-  box-shadow:
-    inset 2rpx -2rpx 1rpx -1rpx rgba(255, 255, 255, 0.92),
-    inset -2rpx 2rpx 1rpx -1rpx rgba(255, 255, 255, 0.84),
-    inset 0 0 3rpx rgba(15, 23, 42, 0.28),
-    0 14rpx 32rpx rgba(15, 23, 42, 0.12);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  background: linear-gradient(145deg, #ffffff 0%, #f8fbff 66%, #fff7ed 100%);
+  border: 1rpx solid rgba(148, 163, 184, 0.26);
+  box-shadow: 0 12rpx 30rpx rgba(37, 99, 235, 0.08);
 }
 
 .empty-mark {
@@ -41,7 +27,7 @@ page {
   border-radius: 18rpx;
   display: block;
   color: #ffffff;
-  background: #2563eb;
+  background: linear-gradient(145deg, #3b82f6 0%, #2563eb 62%, #fb923c 100%);
   font-size: 32rpx;
   font-weight: 900;
 }
@@ -90,7 +76,7 @@ page {
   font-size: 22rpx;
   font-weight: 850;
   color: #ffffff;
-  background: #2563eb;
+  background: #3b82f6;
   flex: none;
 }
 

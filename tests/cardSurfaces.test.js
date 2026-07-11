@@ -15,37 +15,39 @@ function selectorBlock(css, selector) {
   return match[1]
 }
 
-function assertLiquidGlassSurface(file, selector) {
+function assertWebAlignedSurface(file, selector) {
   const block = selectorBlock(read(file), selector)
-  assertLiquidGlassBackground(file, selector)
-  assert(block.includes('border: 1rpx double rgba(51, 65, 85, 0.16)'), `${selector} should use a source-inspired double refractive edge`)
-  assert(block.includes('backdrop-filter: blur(12px) saturate(150%)'), `${selector} should blur the backdrop like glass`)
-  assert(block.includes('-webkit-backdrop-filter: blur(12px) saturate(150%)'), `${selector} should include the WebKit backdrop blur`)
-  assert(block.includes('inset 2rpx -2rpx 1rpx -1rpx rgba(255, 255, 255, 0.92)'), `${selector} should include the bright inner glass edge`)
-  assert(block.includes('inset 0 0 3rpx rgba(15, 23, 42, 0.28)'), `${selector} should include inner depth`)
-  assert(!block.includes('box-shadow: none'), `${selector} should not remove card depth`)
+  assertWebAlignedBackground(file, selector)
+  assert(block.includes('border: 1rpx solid rgba(148, 163, 184, 0.26)'), `${selector} should use the web app's light slate border`)
+  assert(block.includes('box-shadow: 0 12rpx 30rpx rgba(37, 99, 235, 0.08)'), `${selector} should use the web app's lighter blue-tinted shadow`)
+  assert(!block.includes('1rpx double'), `${selector} should not keep the old refractive double border`)
+  assert(!block.includes('backdrop-filter'), `${selector} should not keep the old heavy glass blur`)
+  assert(!block.includes('inset 2rpx'), `${selector} should not keep the old inner glass edge`)
 }
 
-function assertLiquidGlassBackground(file, selector) {
+function assertWebAlignedBackground(file, selector) {
   const block = selectorBlock(read(file), selector)
-  assert(block.includes('linear-gradient(45deg'), `${selector} should include the liquid-glass diagonal highlight`)
-  assert(block.includes('rgba(255, 255, 255, 0.44)'), `${selector} should use a translucent glass base`)
+  assert(block.includes('#ffffff'), `${selector} should use a clean white base like the web app`)
+  assert(block.includes('#f3f9ff') || block.includes('#f8fbff') || block.includes('#fff7ed'), `${selector} should include the web app's pale blue/orange tint`)
+  assert(!block.includes('linear-gradient(45deg'), `${selector} should not keep the old diagonal liquid-glass highlight`)
+  assert(!block.includes('rgba(255, 255, 255, 0.44)'), `${selector} should not keep the old translucent glass base`)
 }
 
 function assertPageShellGradient() {
   const block = selectorBlock(read('app.wxss'), '.page-shell')
   assert(block.includes('radial-gradient'), '.page-shell should use a more visible ambient gradient')
-  assert(block.includes('#e4efff'), '.page-shell should include a stronger blue base stop')
+  assert(block.includes('#eef7ff'), '.page-shell should include the web app pale blue stop')
+  assert(block.includes('#fff8ed'), '.page-shell should include the web app pale orange stop')
 }
 
 assertPageShellGradient()
-assertLiquidGlassSurface('app.wxss', '.card')
-assertLiquidGlassSurface('app.wxss', '.hero-panel')
-assertLiquidGlassSurface('app.wxss', '.input-card')
-assertLiquidGlassSurface('pages/profile/profile.wxss', '.profile-card')
-assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.lawyer-hero')
-assertLiquidGlassSurface('pages/lawyer/lawyer.wxss', '.contact-card')
-assertLiquidGlassBackground('pages/case-detail/case-detail.wxss', '.case-detail-hero')
+assertWebAlignedSurface('app.wxss', '.card')
+assertWebAlignedSurface('app.wxss', '.hero-panel')
+assertWebAlignedSurface('app.wxss', '.input-card')
+assertWebAlignedSurface('pages/profile/profile.wxss', '.profile-card')
+assertWebAlignedSurface('pages/lawyer/lawyer.wxss', '.lawyer-hero')
+assertWebAlignedSurface('pages/lawyer/lawyer.wxss', '.contact-card')
+assertWebAlignedBackground('pages/case-detail/case-detail.wxss', '.case-detail-hero')
 
 ;[
   ['pages/index/index.wxss', '.quick-detect-card'],
@@ -62,4 +64,4 @@ assertLiquidGlassBackground('pages/case-detail/case-detail.wxss', '.case-detail-
   ['pages/tools/tools.wxss', '.assistant-card'],
   ['pages/profile/profile.wxss', '.summary-card'],
   ['pages/profile/profile.wxss', '.contact-card'],
-].forEach(([file, selector]) => assertLiquidGlassBackground(file, selector))
+].forEach(([file, selector]) => assertWebAlignedBackground(file, selector))
