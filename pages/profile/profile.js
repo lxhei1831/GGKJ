@@ -2,6 +2,10 @@ const {
   getRecentReports,
 } = require('../../services/reportStore')
 const {
+  buildProfileMenus,
+  buildProfileSummary,
+} = require('../../services/profileSummary')
+const {
   clearAuth,
   getStoredAuth,
   getWechatLoginCode,
