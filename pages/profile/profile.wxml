@@ -1,12 +1,32 @@
 <view class="page-shell">
   <view class="page-content profile-page">
-    <view class="profile-card">
-      <view class="avatar">跨</view>
+    <view wx:if="{{isLoggedIn}}" class="profile-card">
+      <image wx:if="{{currentUser.avatarUrl}}" class="avatar avatar-image" src="{{currentUser.avatarUrl}}" mode="aspectFill" />
+      <view wx:else class="avatar">港</view>
       <view class="profile-main">
-        <text class="profile-name">跨境合规用户</text>
-        <text class="profile-desc">专业会员 · 有效期至 2026-12-31</text>
+        <text class="profile-name">{{currentUser.name || currentUser.nickname || '港港用户'}}</text>
+        <text class="profile-desc profile-mobile">{{currentUser.mobile || '手机号已绑定'}}</text>
+        <text class="profile-desc profile-sync-copy">小程序与网页端数据互通</text>
       </view>
-      <view class="secondary-button renew-button" bindtap="openMember">续费</view>
+      <view class="profile-actions">
+        <view class="secondary-button profile-action-button" bindtap="openProfileEditor">资料</view>
+        <view class="secondary-button profile-action-button" bindtap="handleLogout">退出</view>
+      </view>
+    </view>
+
+    <view wx:if="{{!isLoggedIn}}" class="card login-card">
+      <text class="section-title login-title">手机号登录</text>
+      <text class="card-desc login-desc">使用微信绑定手机号一键登录，登录后查看账号信息、检测记录和服务进度。</text>
+      <button
+        class="primary-button login-button wechat-login-button"
+        open-type="getPhoneNumber"
+        loading="{{isLoggingIn}}"
+        disabled="{{isLoggingIn}}"
+        bindgetphonenumber="handlePhoneLogin"
+      >
+        {{isLoggingIn ? '登录中' : '一键登录'}}
+      </button>
+      <text wx:if="{{loginError}}" class="login-error">{{loginError}}</text>
     </view>
 
     <view class="section">
@@ -40,7 +60,7 @@
     <view class="section">
       <view class="card contact-card">
         <text class="card-title">联系客服</text>
-        <text class="card-desc">检测结果、TRO案件和律师服务都可从这里发起咨询。</text>
+        <text class="card-desc">检测结果、TRO案件和律师服务都可以从这里发起咨询。</text>
         <button
           class="primary-button contact-button contact-native-button"
           open-type="contact"
@@ -50,6 +70,35 @@
           send-message-path="/pages/profile/profile"
         >
           在线咨询
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{showProfileEditor}}" class="profile-editor-mask" catchtap="closeProfileEditor">
+    <view class="profile-editor-sheet" catchtap="noop">
+      <text class="sheet-title">微信资料</text>
+      <text class="card-desc sheet-desc">同步微信头像和昵称，网页端也会显示同一份资料。</text>
+
+      <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseProfileAvatar">
+        <image wx:if="{{profileAvatarUrl}}" class="avatar-preview" src="{{profileAvatarUrl}}" mode="aspectFill" />
+        <text wx:else class="avatar-placeholder">选头像</text>
+      </button>
+
+      <input
+        class="login-input nickname-input"
+        type="nickname"
+        value="{{profileNickname}}"
+        placeholder="微信昵称"
+        bindinput="onProfileNicknameInput"
+      />
+
+      <text wx:if="{{profileError}}" class="login-error">{{profileError}}</text>
+
+      <view class="sheet-actions">
+        <button class="secondary-button sheet-cancel" disabled="{{isSavingProfile}}" bindtap="closeProfileEditor">取消</button>
+        <button class="primary-button sheet-confirm" loading="{{isSavingProfile}}" disabled="{{isSavingProfile}}" bindtap="saveWechatProfile">
+          {{isSavingProfile ? '保存中' : '保存资料'}}
         </button>
       </view>
     </view>

@@ -1,4 +1,8 @@
 // app.js
+const {
+  DEFAULT_API_BASE_URL,
+} = require('./services/apiConfig')
+
 const CLOUD_ENV = 'cloudbase-d3glhr32of4631ade'
 
 App({
@@ -15,6 +19,6 @@ App({
   },
   globalData: {
     appName: '跨境侵权风险检测',
-    apiBaseUrl: '',
+    apiBaseUrl: DEFAULT_API_BASE_URL,
   },
 })

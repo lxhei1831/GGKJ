@@ -29,8 +29,15 @@ page {
   flex: none;
 }
 
+.avatar-image {
+  display: block;
+  line-height: normal;
+  background: #f8fafc;
+}
+
 .profile-main {
   flex: 1;
+  min-width: 0;
   margin-left: 22rpx;
 }
 
@@ -48,11 +55,66 @@ page {
   color: #667085;
 }
 
-.renew-button {
-  width: 128rpx;
-  height: 66rpx;
-  font-size: 24rpx;
+.profile-sync-copy {
+  margin-top: 4rpx;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
   flex: none;
+}
+
+.profile-action-button {
+  width: 108rpx;
+  height: 58rpx;
+  font-size: 22rpx;
+}
+
+.login-card {
+  margin-top: 0;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fbff 64%, #fff7ed 100%);
+}
+
+.login-title,
+.login-desc {
+  display: block;
+}
+
+.login-desc {
+  margin-top: 8rpx;
+}
+
+.login-button {
+  width: 100%;
+  margin-top: 26rpx;
+}
+
+.wechat-login-button::after,
+.avatar-picker::after,
+.contact-native-button::after {
+  border: 0;
+}
+
+.login-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88rpx;
+  padding: 0 28rpx;
+  border-radius: 24rpx;
+  background: #f8fafc;
+  border: 1rpx solid #dbe5f0;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #101828;
+}
+
+.login-error {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 24rpx;
+  color: #dc2626;
 }
 
 .summary-card {
@@ -132,6 +194,80 @@ page {
   line-height: normal;
 }
 
-.contact-native-button::after {
-  border: 0;
+.profile-editor-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 32rpx;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.profile-editor-sheet {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 34rpx;
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 24rpx 80rpx rgba(15, 23, 42, 0.18);
+}
+
+.sheet-title,
+.sheet-desc {
+  display: block;
+}
+
+.sheet-title {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #101828;
+}
+
+.sheet-desc {
+  margin-top: 8rpx;
+}
+
+.avatar-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132rpx;
+  height: 132rpx;
+  margin: 30rpx auto 24rpx;
+  padding: 0;
+  border-radius: 30rpx;
+  background: #eff6ff;
+  border: 1rpx solid #dbeafe;
+}
+
+.avatar-preview {
+  display: block;
+  width: 132rpx;
+  height: 132rpx;
+  border-radius: 30rpx;
+}
+
+.avatar-placeholder {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.nickname-input {
+  margin-top: 0;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 28rpx;
+}
+
+.sheet-cancel,
+.sheet-confirm {
+  flex: 1;
+  min-width: 0;
 }
