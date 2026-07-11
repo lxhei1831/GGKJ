@@ -234,13 +234,34 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 132rpx;
-  height: 132rpx;
-  margin: 30rpx auto 24rpx;
+  width: 260rpx;
+  height: 184rpx;
+  margin: 28rpx auto 24rpx;
   padding: 0;
   border-radius: 30rpx;
-  background: #eff6ff;
+  background: linear-gradient(145deg, #eff6ff 0%, #f8fafc 100%);
   border: 1rpx solid #dbeafe;
+}
+
+.avatar-default-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+
+.avatar-default-icon {
+  width: 92rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+  border-radius: 24rpx;
+  text-align: center;
+  font-size: 40rpx;
+  font-weight: 900;
+  color: #ffffff;
+  background: linear-gradient(145deg, #3b82f6 0%, #2563eb 62%, #fb923c 100%);
+  box-shadow: 0 12rpx 28rpx rgba(37, 99, 235, 0.18);
 }
 
 .avatar-preview {
@@ -254,6 +275,18 @@ page {
   font-size: 24rpx;
   font-weight: 800;
   color: #2563eb;
+}
+
+.nickname-field {
+  margin-top: 4rpx;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #475467;
 }
 
 .nickname-input {

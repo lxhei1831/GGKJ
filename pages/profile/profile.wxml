@@ -4,7 +4,7 @@
       <image wx:if="{{currentUser.avatarUrl}}" class="avatar avatar-image" src="{{currentUser.avatarUrl}}" mode="aspectFill" />
       <view wx:else class="avatar">港</view>
       <view class="profile-main">
-        <text class="profile-name">{{currentUser.name || currentUser.nickname || '港港用户'}}</text>
+        <text class="profile-name">{{currentUser.displayName || currentUser.name || currentUser.nickname || '港港用户0001'}}</text>
         <text class="profile-desc profile-mobile">{{currentUser.mobile || '手机号已绑定'}}</text>
         <text class="profile-desc profile-sync-copy">小程序与网页端数据互通</text>
       </view>
@@ -82,16 +82,22 @@
 
       <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseProfileAvatar">
         <image wx:if="{{profileAvatarUrl}}" class="avatar-preview" src="{{profileAvatarUrl}}" mode="aspectFill" />
-        <text wx:else class="avatar-placeholder">选头像</text>
+        <view wx:else class="avatar-default-preview">
+          <view class="avatar-default-icon">港</view>
+          <text class="avatar-placeholder">点击设置头像</text>
+        </view>
       </button>
 
-      <input
-        class="login-input nickname-input"
-        type="nickname"
-        value="{{profileNickname}}"
-        placeholder="微信昵称"
-        bindinput="onProfileNicknameInput"
-      />
+      <view class="nickname-field">
+        <text class="field-label">点击设置昵称</text>
+        <input
+          class="login-input nickname-input"
+          type="nickname"
+          value="{{profileNickname}}"
+          placeholder="港港用户0001"
+          bindinput="onProfileNicknameInput"
+        />
+      </view>
 
       <text wx:if="{{profileError}}" class="login-error">{{profileError}}</text>
 

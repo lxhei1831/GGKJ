@@ -34,7 +34,7 @@ Page({
 
     this.setData({
       isLoggedIn: Boolean(auth.token && auth.user),
-      currentUser: auth.user || null,
+      currentUser: withDefaultProfile(auth.user),
       menus: buildProfileMenus(reports),
       summary: buildProfileSummary(reports),
     })
@@ -74,9 +74,12 @@ Page({
           return
         }
 
+        const user = withDefaultProfile(result.user)
         this.setData({
           isLoggedIn: true,
-          currentUser: result.user,
+          currentUser: user,
+        }, () => {
+          this.openProfileEditorAfterLogin(user)
         })
         wx.showToast({
           title: '登录成功',
@@ -86,7 +89,7 @@ Page({
       .catch((error) => {
         const isMissingEndpoint = error && error.statusCode === 404
         this.setData({
-          loginError: isMissingEndpoint ? '手机号登录接口暂未开通' : '手机号登录失败，请稍后再试',
+          loginError: isMissingEndpoint ? '手机号登录接口暂未开通' : formatPhoneLoginError(error),
         })
       })
       .finally(() => {
@@ -113,10 +116,14 @@ Page({
     if (!this.data.isLoggedIn || this.data.isSavingProfile) return
 
     const user = this.data.currentUser || {}
+    this.openProfileEditorAfterLogin(user)
+  },
+  openProfileEditorAfterLogin(user) {
+    const profileUser = withDefaultProfile(user) || {}
     this.setData({
       showProfileEditor: true,
-      profileNickname: user.name || user.nickname || '',
-      profileAvatarUrl: user.avatarUrl || '',
+      profileNickname: getProfileEditorName(profileUser),
+      profileAvatarUrl: profileUser.avatarUrl || '',
       profileError: '',
     })
   },
@@ -165,7 +172,7 @@ Page({
         avatarUrl: storedAvatarUrl,
       }))
       .then((result) => {
-        const user = result && result.user ? result.user : null
+        const user = withDefaultProfile(result && result.user ? result.user : null)
         if (!user) {
           this.setData({ profileError: '资料保存失败，请稍后再试' })
           return
@@ -211,3 +218,52 @@ Page({
     })
   },
 })
+
+function formatPhoneLoginError(error) {
+  const message = [
+    error && error.message,
+    error && error.errMsg,
+  ].filter(Boolean).join(' ')
+
+  if (/apiGateway|cloud\.callFunction|function/i.test(message)) {
+    return '登录代理云函数 apiGateway 未部署或体验版未更新'
+  }
+
+  if (/url not in domain list|url not in|request:fail|合法域名|not in domain/i.test(message)) {
+    return '体验版暂不能直连临时 IP，请先部署 apiGateway 云函数'
+  }
+
+  return '手机号登录失败，请稍后再试'
+}
+
+function withDefaultProfile(user) {
+  if (!user) return null
+  return Object.assign({}, user, {
+    displayName: getProfileDisplayName(user),
+  })
+}
+
+function getProfileDisplayName(user) {
+  const name = cleanProfileName(user && (user.name || user.nickname))
+  if (name && !isGeneratedProfileName(name)) return name
+  return getDefaultProfileName(user)
+}
+
+function getProfileEditorName(user) {
+  return getProfileDisplayName(user)
+}
+
+function getDefaultProfileName(user) {
+  const id = Number(user && user.id)
+  const sequence = Number.isFinite(id) && id > 0 ? Math.floor(id) : 1
+  return `港港用户${String(sequence).padStart(4, '0')}`
+}
+
+function isGeneratedProfileName(name) {
+  const text = cleanProfileName(name)
+  return /^用户\d+$/.test(text) || /^港港用户\d+$/.test(text)
+}
+
+function cleanProfileName(name) {
+  return String(name || '').trim()
+}

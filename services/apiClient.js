@@ -1,7 +1,9 @@
 const {
   API_TOKEN_STORAGE_KEY,
+  CLOUD_API_GATEWAY_NAME,
   buildApiUrl,
   getApiBaseUrl,
+  normalizeApiBaseUrl,
 } = require('./apiConfig')
 
 class ApiError extends Error {
@@ -36,8 +38,8 @@ function getStoredToken(wxAdapter) {
 
 function request(path, options, adapter) {
   const wxAdapter = getWx(adapter)
-  if (!wxAdapter || typeof wxAdapter.request !== 'function') {
-    return Promise.reject(new Error('wx.request is unavailable'))
+  if (!wxAdapter) {
+    return Promise.reject(new Error('wx is unavailable'))
   }
 
   const requestOptions = options || {}
@@ -50,6 +52,14 @@ function request(path, options, adapter) {
 
   if (token && !header.Authorization) {
     header.Authorization = `Bearer ${token}`
+  }
+
+  if (shouldUseCloudApiProxy(baseUrl, wxAdapter)) {
+    return requestViaCloudProxy(path, requestOptions, token, wxAdapter)
+  }
+
+  if (typeof wxAdapter.request !== 'function') {
+    return Promise.reject(new Error('wx.request is unavailable'))
   }
 
   return new Promise((resolve, reject) => {
@@ -73,6 +83,40 @@ function request(path, options, adapter) {
         reject(new Error(error && error.errMsg ? error.errMsg : 'API request failed'))
       },
     })
+  })
+}
+
+function shouldUseCloudApiProxy(baseUrl, wxAdapter) {
+  const normalizedBaseUrl = normalizeApiBaseUrl(baseUrl)
+  return /^http:\/\//i.test(normalizedBaseUrl) &&
+    wxAdapter &&
+    wxAdapter.cloud &&
+    typeof wxAdapter.cloud.callFunction === 'function'
+}
+
+function normalizeApiPath(path) {
+  const value = String(path || '').trim()
+  if (!value) return '/'
+  return value.startsWith('/') ? value : `/${value}`
+}
+
+function requestViaCloudProxy(path, requestOptions, token, wxAdapter) {
+  return wxAdapter.cloud.callFunction({
+    name: CLOUD_API_GATEWAY_NAME,
+    data: {
+      path: normalizeApiPath(path),
+      method: requestOptions.method || 'GET',
+      data: requestOptions.data || {},
+      token,
+    },
+  }).then((response) => {
+    const result = response && response.result ? response.result : {}
+    const statusCode = Number(result.statusCode || 0)
+    const data = result.data || {}
+    if (statusCode >= 200 && statusCode < 300) {
+      return data
+    }
+    throw new ApiError(statusCode, data.detail || data.message || result.message || '', data)
   })
 }
 

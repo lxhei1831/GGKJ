@@ -1,4 +1,5 @@
 const DEFAULT_API_BASE_URL = 'http://62.234.77.140'
+const CLOUD_API_GATEWAY_NAME = 'apiGateway'
 const API_TOKEN_STORAGE_KEY = 'ggkjApiToken'
 const API_USER_STORAGE_KEY = 'ggkjApiUser'
 
@@ -20,6 +21,7 @@ function buildApiUrl(baseUrl, path) {
 module.exports = {
   API_TOKEN_STORAGE_KEY,
   API_USER_STORAGE_KEY,
+  CLOUD_API_GATEWAY_NAME,
   DEFAULT_API_BASE_URL,
   buildApiUrl,
   getApiBaseUrl,
