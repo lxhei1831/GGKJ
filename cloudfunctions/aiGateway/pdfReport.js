@@ -4,7 +4,7 @@ const https = require('https')
 const path = require('path')
 const PDFDocument = require('pdfkit')
 
-const DEFAULT_FONT_PATH = path.join(__dirname, 'assets', 'fonts', 'NotoSansSC-VF.ttf')
+const DEFAULT_FONT_PATH = path.join(__dirname, 'assets', 'fonts', 'NotoSansSC-ReportSubset.ttf')
 const FALLBACK_FONT_PATH = 'C:/Windows/Fonts/NotoSansSC-VF.ttf'
 const WATERMARK_PATH = path.join(__dirname, 'assets', 'watermark.png')
 
@@ -45,9 +45,13 @@ const PAGE = {
   bottom: 770,
 }
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024
+const MAX_FONT_BYTES = 24 * 1024 * 1024
+
+let remoteFontCacheKey = ''
+let remoteFontBufferPromise = null
 
 async function generatePdfReportBuffer(report, options) {
-  const config = buildRenderConfig(options)
+  const config = await buildRenderConfig(options)
   const doc = new PDFDocument({
     autoFirstPage: false,
     size: 'A4',
@@ -63,12 +67,7 @@ async function generatePdfReportBuffer(report, options) {
 
   doc.on('data', (chunk) => chunks.push(chunk))
 
-  if (config.fontPath) {
-    doc.registerFont('body', config.fontPath)
-    doc.registerFont('bold', config.fontPath)
-  } else {
-    installBuiltinFontFallback(doc)
-  }
+  installReportFonts(doc, config)
 
   renderConclusionSection(doc, report, config)
   await renderVisualEvidenceSection(doc, report, config)
@@ -83,13 +82,15 @@ async function generatePdfReportBuffer(report, options) {
   })
 }
 
-function buildRenderConfig(options) {
+async function buildRenderConfig(options) {
   const config = options || {}
   const watermarkPath = config.watermarkPath || WATERMARK_PATH
+  const fontSource = await resolveFontSource(config)
 
   return {
     fetchImages: config.fetchImages !== false,
-    fontPath: pickFontPath(config.fontPath),
+    fontPath: fontSource && fontSource.path,
+    fontBuffer: fontSource && fontSource.buffer,
     watermarkPath,
     watermarkBuffer: readOptionalFile(watermarkPath),
   }
@@ -973,6 +974,30 @@ function drawFauxBoldText(doc, text, x, y, options) {
   doc.y = afterY
 }
 
+function installReportFonts(doc, config) {
+  try {
+    if (config.fontBuffer) {
+      doc.registerFont('body', config.fontBuffer)
+      doc.registerFont('bold', config.fontBuffer)
+      doc.font('body')
+      doc.font('bold')
+      return
+    }
+
+    if (config.fontPath) {
+      doc.registerFont('body', config.fontPath)
+      doc.registerFont('bold', config.fontPath)
+      doc.font('body')
+      doc.font('bold')
+      return
+    }
+  } catch (error) {
+    // Invalid or unavailable custom fonts should not block report generation.
+  }
+
+  installBuiltinFontFallback(doc)
+}
+
 function installBuiltinFontFallback(doc) {
   const originalFont = doc.font.bind(doc)
   const originalText = doc.text.bind(doc)
@@ -1186,6 +1211,120 @@ function isSupportedImageBuffer(buffer, contentType) {
   const isPng = buffer.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
   const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8
   return hasImageType && (isPng || isJpeg)
+}
+
+async function resolveFontSource(config) {
+  const explicitBuffer = normalizeFontBuffer(config.fontBuffer)
+  if (explicitBuffer) return { buffer: explicitBuffer }
+
+  const fontPath = pickFontPath(config.fontPath || process.env.PDF_FONT_PATH)
+  if (fontPath) return { path: fontPath }
+
+  const remoteBuffer = await readConfiguredRemoteFont(config)
+  return remoteBuffer ? { buffer: remoteBuffer } : null
+}
+
+async function readConfiguredRemoteFont(config) {
+  const fileID = String(config.fontFileID || config.fontFileId || process.env.PDF_FONT_FILE_ID || '').trim()
+  if (fileID) {
+    return withRemoteFontCache(`cloud:${fileID}`, () => downloadCloudFontBuffer(fileID))
+  }
+
+  const url = String(config.fontUrl || process.env.PDF_FONT_URL || '').trim()
+  if (url) {
+    return withRemoteFontCache(`url:${url}`, () => fetchBinaryBuffer(url, {
+      accept: 'font/*,application/octet-stream,*/*;q=0.8',
+      maxBytes: MAX_FONT_BYTES,
+      timeout: 10000,
+    }))
+  }
+
+  return null
+}
+
+function withRemoteFontCache(cacheKey, loader) {
+  if (remoteFontCacheKey === cacheKey && remoteFontBufferPromise) return remoteFontBufferPromise
+
+  remoteFontCacheKey = cacheKey
+  remoteFontBufferPromise = Promise.resolve()
+    .then(loader)
+    .then(normalizeFontBuffer)
+    .catch(() => null)
+
+  return remoteFontBufferPromise
+}
+
+async function downloadCloudFontBuffer(fileID) {
+  let cloud
+  try {
+    cloud = require('wx-server-sdk')
+  } catch (error) {
+    return null
+  }
+
+  if (!cloud || typeof cloud.downloadFile !== 'function') return null
+  const result = await cloud.downloadFile({ fileID })
+  return normalizeFontBuffer(result && result.fileContent)
+}
+
+function fetchBinaryBuffer(urlString, options, redirectCount) {
+  const value = String(urlString || '').trim()
+  if (!value) return Promise.resolve(null)
+
+  const url = new URL(value)
+  const client = url.protocol === 'http:' ? http : https
+  const settings = options || {}
+  const redirects = Number(redirectCount) || 0
+
+  return new Promise((resolve, reject) => {
+    const req = client.get({
+      hostname: url.hostname,
+      port: url.port || undefined,
+      path: `${url.pathname}${url.search}`,
+      headers: {
+        accept: settings.accept || '*/*',
+        'user-agent': 'Mozilla/5.0 (compatible; GGKJ-IP-Risk/1.0)',
+      },
+      timeout: settings.timeout || 10000,
+    }, (res) => {
+      const headers = res.headers || {}
+      if ([301, 302, 303, 307, 308].includes(res.statusCode) && headers.location && redirects < 3) {
+        res.resume()
+        const nextUrl = new URL(headers.location, url).toString()
+        fetchBinaryBuffer(nextUrl, settings, redirects + 1).then(resolve).catch(reject)
+        return
+      }
+
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        res.resume()
+        reject(new Error(`binary status ${res.statusCode}`))
+        return
+      }
+
+      const chunks = []
+      let total = 0
+      res.on('data', (chunk) => {
+        total += chunk.length
+        if (total > (settings.maxBytes || MAX_FONT_BYTES)) {
+          req.destroy(new Error('binary response too large'))
+          return
+        }
+        chunks.push(chunk)
+      })
+      res.on('end', () => resolve(Buffer.concat(chunks)))
+    })
+
+    req.on('timeout', () => {
+      req.destroy(new Error('binary request timed out'))
+    })
+    req.on('error', reject)
+  })
+}
+
+function normalizeFontBuffer(value) {
+  if (Buffer.isBuffer(value) && value.length > 0) return value
+  if (value instanceof Uint8Array && value.length > 0) return Buffer.from(value)
+  return null
 }
 
 function pickFontPath(preferredPath) {

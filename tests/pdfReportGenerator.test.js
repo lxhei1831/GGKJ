@@ -5,6 +5,9 @@ const http = require('http')
 const path = require('path')
 const stream = require('stream')
 
+const AI_GATEWAY_DIR = path.join(__dirname, '..', 'cloudfunctions', 'aiGateway')
+const CLOUD_FUNCTION_SOURCE_LIMIT_BYTES = 2 * 1024 * 1024
+
 const {
   REPORT_SECTION_TITLES,
   TYPOGRAPHY,
@@ -15,6 +18,16 @@ const {
   formatReportSource,
   generatePdfReportBuffer,
 } = require('../cloudfunctions/aiGateway/pdfReport')
+
+function getDirectorySize(directory) {
+  if (!fs.existsSync(directory)) return 0
+  return fs.readdirSync(directory, { withFileTypes: true }).reduce((total, entry) => {
+    const entryPath = path.join(directory, entry.name)
+    if (entry.isDirectory()) return total + getDirectorySize(entryPath)
+    if (entry.isFile()) return total + fs.statSync(entryPath).size
+    return total
+  }, 0)
+}
 
 async function run() {
   const report = {
@@ -85,6 +98,11 @@ async function run() {
   assert.strictEqual(formatReportSource('ai-cloud-function'), '港港跨境知识产权检测', 'PDF report source should show the GGKJ professional detection brand instead of an internal source key')
   assert.strictEqual(formatReportSource('ai-cloud-fallback'), '港港跨境知识产权检测', 'fallback PDF reports should also show the GGKJ professional detection brand')
   assert.strictEqual(formatReportSource(''), '港港跨境知识产权检测', 'PDF report source should default to the GGKJ professional detection brand')
+  const bundledAssetBytes = getDirectorySize(path.join(AI_GATEWAY_DIR, 'assets'))
+  assert(
+    bundledAssetBytes < CLOUD_FUNCTION_SOURCE_LIMIT_BYTES,
+    `aiGateway bundled assets must stay below the WeChat cloud upload limit: ${(bundledAssetBytes / 1024).toFixed(1)}KB`
+  )
 
   const candidateReference = buildCandidateReferenceSummary(report.trademarkCandidates[0])
   assert.strictEqual(candidateReference.wordmark, 'BLUE MOON', 'candidate fallback reference should preserve the rights wordmark')
@@ -141,6 +159,12 @@ async function run() {
   assert.strictEqual(buffer.slice(0, 4).toString('ascii'), '%PDF', 'generated report should be a PDF file')
   assert(buffer.length > 1000, 'generated report should contain visible report content')
 
+  const invalidFontBuffer = await generatePdfReportBuffer(report, {
+    fetchImages: false,
+    fontBuffer: Buffer.from('not a valid font file'),
+  })
+  assert.strictEqual(invalidFontBuffer.slice(0, 4).toString('ascii'), '%PDF', 'invalid configured font should not prevent PDF generation')
+
   const originalHttpGet = http.get
   const invalidImageUrl = 'http://mock.invalid/uploaded-image'
   http.get = (options, callback) => {
@@ -179,7 +203,7 @@ async function run() {
     const originalExistsSync = fs.existsSync
     fs.existsSync = function patchedExistsSync(filePath) {
       const normalized = String(filePath || '').replace(/\\\\/g, '/')
-      if (normalized.endsWith('/cloudfunctions/aiGateway/assets/fonts/NotoSansSC-VF.ttf') || normalized.endsWith('/Windows/Fonts/NotoSansSC-VF.ttf')) {
+      if (normalized.endsWith('/cloudfunctions/aiGateway/assets/fonts/NotoSansSC-ReportSubset.ttf') || normalized.endsWith('/Windows/Fonts/NotoSansSC-VF.ttf')) {
         return false
       }
       return originalExistsSync.apply(this, arguments)
