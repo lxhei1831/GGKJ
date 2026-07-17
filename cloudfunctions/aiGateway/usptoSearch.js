@@ -108,11 +108,19 @@ async function searchUsptoTrademarks(input, options) {
       return postUsptoSearch(payload, config)
     }))
 
+    const candidates = rankTrademarkCandidates(dedupeCandidates(responses.flatMap((response) => (
+      normalizeTrademarkCandidates(response, limit)
+    ))), terms)
+      .filter(hasCandidateEvidence)
+      .slice(0, limit)
+
+    if (!candidates.length) {
+      warnings.push('USPTO 未返回包含序列号、权利人、商品服务或官方图像的可靠候选记录。')
+    }
+
     return {
       terms,
-      candidates: rankTrademarkCandidates(dedupeCandidates(responses.flatMap((response) => (
-        normalizeTrademarkCandidates(response, limit)
-      ))), terms).slice(0, limit),
+      candidates,
       warnings,
     }
   } catch (error) {
@@ -177,6 +185,18 @@ function rankTrademarkCandidates(candidates, terms) {
   return (candidates || []).slice().sort((left, right) => (
     scoreCandidate(right, searchTerms) - scoreCandidate(left, searchTerms)
   ))
+}
+
+function hasCandidateEvidence(candidate) {
+  if (!candidate) return false
+  return Boolean(
+    String(candidate.serialNumber || '').trim() ||
+    String(candidate.registrationNumber || '').trim() ||
+    String(candidate.ownerName || '').trim() ||
+    String(candidate.goodsAndServices || '').trim() ||
+    String(candidate.markImageUrl || '').trim() ||
+    String(candidate.sourceUrl || '').trim()
+  )
 }
 
 function scoreCandidate(candidate, terms) {
@@ -409,4 +429,5 @@ module.exports = {
   searchUsptoTrademarks,
   normalizeTrademarkCandidates,
   rankTrademarkCandidates,
+  hasCandidateEvidence,
 }

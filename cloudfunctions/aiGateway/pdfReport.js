@@ -148,14 +148,15 @@ async function renderVisualEvidenceSection(doc, report, config) {
   addSectionPage(doc, config, REPORT_SECTION_TITLES[1], 'Visual comparison and suspected infringement markups')
 
   const userImageUrl = first(report.imageUrls)
-  const candidate = first(report.trademarkCandidates) || {}
+  const candidate = firstCandidateReference(report.trademarkCandidates)
   const findings = buildVisualEvidenceFindings(report)
   const userImage = config.fetchImages ? await fetchImageBuffer(userImageUrl).catch(() => null) : null
   const officialImageResult = config.fetchImages ? await resolveCandidateImage(candidate).catch(() => null) : null
   const officialImage = officialImageResult && officialImageResult.buffer
   const officialImageUrl = officialImageResult && officialImageResult.source
     ? officialImageResult.source.url
-    : candidate.markImageUrl
+    : candidate && candidate.markImageUrl
+  const candidateBoxTitle = candidate ? '候选权利图 - 对比参照' : '官方候选结果 - 未匹配'
 
   drawCallout(doc, config, {
     title: '阅读说明',
@@ -165,7 +166,7 @@ async function renderVisualEvidenceSection(doc, report, config) {
 
   const imageTop = doc.y + 6
   drawImageBox(doc, 44, imageTop, 244, 214, '用户上传图 - 待复核区域', userImage, userImageUrl, findings, 'userRegion')
-  drawImageBox(doc, 307, imageTop, 244, 214, '候选权利图 - 对比参照', officialImage, officialImageUrl, findings, 'officialRegion', {
+  drawImageBox(doc, 307, imageTop, 244, 214, candidateBoxTitle, officialImage, officialImageUrl, findings, 'officialRegion', {
     candidate,
     fallbackKind: 'candidateReference',
     sourceLabel: officialImageResult && officialImageResult.source && officialImageResult.source.label,
@@ -254,7 +255,7 @@ function renderEvidenceSection(doc, report, config) {
 function buildExecutiveSummary(report) {
   const input = report.input || {}
   const result = report.result || {}
-  const candidate = first(report.trademarkCandidates)
+  const candidate = firstCandidateReference(report.trademarkCandidates)
   const findings = buildVisualEvidenceFindings(report)
   const score = clampScore(result.score)
   const publishText = result.canPublish
@@ -285,14 +286,16 @@ function buildVisualEvidenceFindings(report) {
 
 function buildSignalRegionFindings(report) {
   const signals = report.trademarkSignals || {}
-  const candidate = first(report.trademarkCandidates) || {}
-  const wordmark = candidate.wordmark || first(normalizeList(signals.wordMarks || signals.searchTerms)) || '候选商标'
+  const candidate = firstCandidateReference(report.trademarkCandidates) || {}
+  const wordmark = candidate.wordmark || first(normalizeList(signals.wordMarks || signals.searchTerms)) || '疑似商标词'
   const regions = normalizeMarkRegions(signals.markRegions)
 
   return regions.slice(0, 3).map((item, index) => ({
     id: index + 1,
     title: `疑似侵权区域 ${index + 1} - ${formatRegionType(item.type)}`,
-    detail: `${item.label || formatRegionType(item.type)} 与候选商标 ${wordmark} 存在来源识别层面的近似关注点。`,
+    detail: candidate.wordmark
+      ? `${item.label || formatRegionType(item.type)} 与候选商标 ${wordmark} 存在来源识别层面的近似关注点。`
+      : `${item.label || formatRegionType(item.type)} 识别为疑似商标词 ${wordmark}，但尚未匹配到官方候选权利记录。`,
     evidence: item.evidence || '该区域来自上传图的商标/Logo视觉线索定位，候选权利图区域仍需结合官方图人工复核。',
     level: item.level || (index === 0 ? 'high' : 'medium'),
     confidence: item.confidence,
@@ -304,19 +307,21 @@ function buildSignalRegionFindings(report) {
 function buildGenericVisualEvidenceFindings(report) {
   const result = report.result || {}
   const signals = report.trademarkSignals || {}
-  const candidate = first(report.trademarkCandidates) || {}
+  const candidate = firstCandidateReference(report.trademarkCandidates) || {}
   const wordMarks = normalizeList(signals.wordMarks || signals.searchTerms)
   const visuals = normalizeList(signals.visualElements)
   const colors = normalizeList(signals.colors)
   const composition = normalizeList(signals.composition)
   const riskItems = normalizeList((result.riskItems || []).map((item) => item && item.title))
-  const wordmark = candidate.wordmark || first(wordMarks) || '候选商标'
+  const wordmark = candidate.wordmark || first(wordMarks) || '疑似商标词'
   const goods = candidate.goodsAndServices || '相关商品/服务类别'
 
   return [{
     id: 1,
     title: '疑似侵权主体复核区域',
-    detail: `${wordMarks.length ? wordMarks.join('、') : wordmark} 与候选商标 ${wordmark} 存在来源识别层面的近似关注点。`,
+    detail: candidate.wordmark
+      ? `${wordMarks.length ? wordMarks.join('、') : wordmark} 与候选商标 ${wordmark} 存在来源识别层面的近似关注点。`
+      : `${wordMarks.length ? wordMarks.join('、') : wordmark} 被识别为疑似商标词，但尚未匹配到官方候选权利记录。`,
     evidence: [
       riskItems[0],
       visuals.length ? `视觉线索：${visuals.join('、')}` : '',
@@ -332,7 +337,7 @@ function buildGenericVisualEvidenceFindings(report) {
 function buildSimilarityMatrix(report) {
   const result = report.result || {}
   const signals = report.trademarkSignals || {}
-  const candidate = first(report.trademarkCandidates) || {}
+  const candidate = firstCandidateReference(report.trademarkCandidates) || {}
   const score = clampScore(result.score)
   const level = score >= 75 ? 'high' : score >= 45 ? 'medium' : 'low'
   const wordMarks = normalizeList(signals.wordMarks || signals.searchTerms)
@@ -344,7 +349,7 @@ function buildSimilarityMatrix(report) {
       dimension: '文字/商标词',
       assessment: wordMarks.length || candidate.wordmark ? levelText(level) : '待补充',
       evidence: wordMarks.length
-        ? `识别到 ${wordMarks.join('、')}；候选商标为 ${candidate.wordmark || '未命名商标'}。`
+        ? `识别到 ${wordMarks.join('、')}；${candidate.wordmark ? `候选商标为 ${candidate.wordmark}` : '尚未匹配到官方候选商标'}。`
         : '未识别到明确文字标识，建议补充更清晰的正面图。',
       level,
     },
@@ -666,7 +671,9 @@ function drawCandidateReferenceCard(doc, candidate, imageX, imageY, imageW, imag
   const wordmarkY = cardY + 38
   const wordmarkH = 42
   const wordmark = truncate(summary.wordmark, 30)
-  const wordmarkFontSize = wordmark.length > 22 ? 15 : wordmark.length > 14 ? 18 : 22
+  const wordmarkFontSize = summary.isEmpty
+    ? 15.5
+    : wordmark.length > 22 ? 15 : wordmark.length > 14 ? 18 : 22
 
   drawPanel(doc, cardX, cardY, cardW, cardH, COLORS.white, '#bfd1e8', 8)
   doc.font('bold').fontSize(7.6).fillColor(COLORS.blue)
@@ -725,6 +732,20 @@ function drawReferenceBadge(doc, x, y, status) {
 
 function buildCandidateReferenceSummary(candidate) {
   const item = candidate || {}
+  if (!hasCandidateReference(item)) {
+    return {
+      isEmpty: true,
+      wordmark: '未匹配到官方候选',
+      status: 'NO MATCH',
+      serialLine: 'Serial: - | Reg: -',
+      ownerLine: 'Owner: 未获得可核验权利人',
+      goodsLine: 'Goods/Services: 未获得可核验商品/服务类别',
+      sourceLine: 'Source: USPTO/TSDR 未返回可靠候选',
+      hasOfficialImageUrl: false,
+      note: '本次未匹配到可核验的官方候选商标图或注册记录。请结合检索词、商品类别和人工 USPTO/TSDR 复核继续确认。',
+    }
+  }
+
   const wordmark = String(item.wordmark || item.serialNumber || '候选权利标识').trim()
   const status = String(item.status || 'TO REVIEW').trim()
   const serialNumber = String(item.serialNumber || '-').trim()
@@ -746,6 +767,22 @@ function buildCandidateReferenceSummary(candidate) {
       ? `官方图像暂未嵌入，以下为候选权利文字参照。来源：${truncate(sourceLabel, 24)}。`
       : `该候选记录暂无可用官方图像，以下为候选权利文字参照。来源：${truncate(sourceLabel, 24)}。`,
   }
+}
+
+function firstCandidateReference(candidates) {
+  return (Array.isArray(candidates) ? candidates : []).find(hasCandidateReference) || null
+}
+
+function hasCandidateReference(candidate) {
+  if (!candidate) return false
+  return Boolean(
+    String(candidate.serialNumber || '').trim() ||
+    String(candidate.registrationNumber || '').trim() ||
+    String(candidate.ownerName || '').trim() ||
+    String(candidate.goodsAndServices || '').trim() ||
+    String(candidate.markImageUrl || '').trim() ||
+    String(candidate.sourceUrl || '').trim()
+  )
 }
 
 function drawAnnotationOverlay(doc, x, y, width, height, findings, regionKey) {

@@ -94,6 +94,12 @@ async function run() {
   assert(candidateReference.goodsLine.includes('Beer; ale; lager.'), 'candidate fallback reference should include goods and services context')
   assert.strictEqual(candidateReference.hasOfficialImageUrl, false, 'candidate without markImageUrl should be treated as an official-image fallback')
 
+  const emptyCandidateReference = buildCandidateReferenceSummary(null)
+  assert.strictEqual(emptyCandidateReference.isEmpty, true, 'empty candidate reference should be explicit instead of pretending a candidate exists')
+  assert.strictEqual(emptyCandidateReference.wordmark, '未匹配到官方候选', 'empty candidate reference should clearly say no official candidate was found')
+  assert(!emptyCandidateReference.ownerLine.includes('pending review'), 'empty candidate reference should not show fake pending owner data')
+  assert(!emptyCandidateReference.goodsLine.includes('pending review'), 'empty candidate reference should not show fake pending goods data')
+
   const visualFindings = buildVisualEvidenceFindings(report)
   assert.strictEqual(visualFindings.length, 1, 'AI visual coordinates should replace generic fixed findings')
   assert.strictEqual(visualFindings[0].id, 1, 'visual findings should be numbered for PDF callouts')

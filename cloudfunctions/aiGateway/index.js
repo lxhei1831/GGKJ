@@ -16,6 +16,7 @@ cloud.init({
 const DEFAULT_BASE_URL = 'https://newapi.lxhei.xyz/v1'
 const DEFAULT_MODEL = 'gpt-5.5'
 const DEFAULT_TIMEOUT_MS = 30000
+const DEFAULT_AI_TIMEOUT_MS = 20000
 
 exports.main = async (event) => {
   try {
@@ -58,19 +59,6 @@ async function buildTaskContext(task, input) {
     return context
   }
 
-  try {
-    context.trademarkSignals = await requestTrademarkSignals(input, imageUrls)
-  } catch (error) {
-    context.warnings.push(`AI 商标线索提取失败：${error.message || 'unknown error'}`)
-  }
-
-  const usptoResult = await searchUsptoTrademarks(Object.assign({}, input, {
-    trademarkSignals: context.trademarkSignals,
-  }))
-  context.trademarkSearchTerms = usptoResult.terms || []
-  context.trademarkCandidates = usptoResult.candidates || []
-  context.warnings = context.warnings.concat(usptoResult.warnings || [])
-
   return context
 }
 
@@ -91,8 +79,11 @@ async function buildTaskData(task, input, context) {
 async function enrichTaskResponse(task, data, input, context) {
   if (task !== 'risk_detect') return data
 
+  await completeTrademarkContext(input, context, data)
+
+  const trademarkSignals = context.trademarkSignals || data.trademarkSignals || null
   const enriched = Object.assign({}, data, {
-    trademarkSignals: context.trademarkSignals,
+    trademarkSignals,
     trademarkSearchTerms: context.trademarkSearchTerms,
     trademarkCandidates: context.trademarkCandidates,
     usptoWarnings: context.warnings,
@@ -103,7 +94,7 @@ async function enrichTaskResponse(task, data, input, context) {
       input,
       result: enriched,
       imageUrls: context.imageUrls,
-      trademarkSignals: context.trademarkSignals,
+      trademarkSignals,
       trademarkCandidates: context.trademarkCandidates,
       warnings: context.warnings,
       generatedAt: formatReportTime(),
@@ -113,6 +104,31 @@ async function enrichTaskResponse(task, data, input, context) {
     return Object.assign(enriched, {
       pdfReportError: error.message || 'PDF report generation failed',
     })
+  }
+}
+
+async function completeTrademarkContext(input, context, data) {
+  if (!shouldSearchUspto(input) || (context.trademarkCandidates || []).length) {
+    return
+  }
+
+  const signals = data && data.trademarkSignals
+    ? data.trademarkSignals
+    : context.trademarkSignals
+  const trademarkSignals = signals ? normalizeTrademarkSignals(signals) : null
+  if (trademarkSignals) {
+    context.trademarkSignals = trademarkSignals
+  }
+
+  try {
+    const usptoResult = await searchUsptoTrademarks(Object.assign({}, input, {
+      trademarkSignals: context.trademarkSignals,
+    }))
+    context.trademarkSearchTerms = usptoResult.terms || []
+    context.trademarkCandidates = usptoResult.candidates || []
+    context.warnings = context.warnings.concat(usptoResult.warnings || [])
+  } catch (error) {
+    context.warnings.push(`USPTO search failed: ${error.message || 'unknown error'}`)
   }
 }
 
@@ -214,9 +230,11 @@ function getTaskConfig(task) {
         '如果输入中包含USPTO候选商标和官方商标图，请把用户上传图与官方候选图进行近似度对比，重点判断文字、构图、图形元素、商品类别和实际使用场景。',
         '输出要谨慎表述为风险初筛，不要宣称已经构成法律意义上的最终侵权。',
         '只返回一个JSON对象，不要返回Markdown、代码块或额外解释。',
-        'JSON字段必须包含: score, riskItems, suggestions, jurisdiction, canPublish, visualFindings。',
+        'JSON字段必须包含: score, riskItems, suggestions, jurisdiction, canPublish, trademarkSignals, visualFindings。',
         'score为0到100的数字；riskItems为数组，每项包含title、detail、level，level只能是low、medium、high；suggestions为字符串数组；canPublish为布尔值。',
+        'trademarkSignals为对象，用于后续USPTO检索，包含wordMarks、searchTerms、visualElements、colors、composition、markRegions；无法识别时返回空数组。',
         'visualFindings为0到4项数组，用于PDF自适应红框；每项包含title、detail、evidence、level、confidence、userRegion、officialRegion。',
+        '如果输入中没有trademarkCandidates，请将visualFindings返回为空数组；可定位的用户上传图疑似区域请放入trademarkSignals.markRegions。',
         'userRegion是用户上传图中的疑似侵权区域，officialRegion是候选权利图中的对应区域；坐标必须是0到1之间的归一化{x,y,w,h}。无法可靠定位时返回空数组，不要编造固定坐标。',
     ].join('\n'),
   }
@@ -371,6 +389,7 @@ function normalizeRiskDetectionResult(result, input) {
     ],
     jurisdiction: result.jurisdiction || `${input.platform || '平台'} / ${input.countryRegion || '目标市场'}`,
     canPublish: typeof result.canPublish === 'boolean' ? result.canPublish : score < 45,
+    trademarkSignals: normalizeTrademarkSignals(result.trademarkSignals || result),
     visualFindings: normalizeVisualFindings(result.visualFindings),
     source: 'ai-cloud-function',
   }
@@ -510,7 +529,7 @@ function formatReportTime() {
 function postJson(urlString, body, apiKey) {
   const url = new URL(urlString)
   const client = url.protocol === 'http:' ? http : https
-  const timeout = Number(process.env.AI_TIMEOUT_MS || DEFAULT_TIMEOUT_MS)
+  const timeout = Number(process.env.AI_TIMEOUT_MS || DEFAULT_AI_TIMEOUT_MS)
   const data = JSON.stringify(body)
 
   return new Promise((resolve, reject) => {
