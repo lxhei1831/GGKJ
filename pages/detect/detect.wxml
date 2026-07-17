@@ -49,9 +49,24 @@
           </view>
           <view class="selector-item">
             <text class="field-label">国家/地区</text>
-            <picker mode="selector" range="{{countryRegions}}" value="{{countryIndex}}" bindchange="bindCountryChange">
-              <view class="picker-field">{{selectedCountryRegion}}</view>
-            </picker>
+            <view class="picker-field country-picker-field" bindtap="openCountrySelector">
+              <view class="flag-art flag-art-{{selectedCountryFlagKey}}"></view>
+              <text class="country-name">{{selectedCountryRegion}}</text>
+              <text class="country-chevron">⌄</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{countryPanelVisible}}" class="country-selector-mask" bindtap="closeCountrySelector"></view>
+        <view wx:if="{{countryPanelVisible}}" class="country-selector-panel">
+          <view class="country-selector-head">
+            <text class="country-selector-title">选择国家/地区</text>
+            <text class="country-selector-close" bindtap="closeCountrySelector">×</text>
+          </view>
+          <view class="country-option {{countryIndex === index ? 'country-option-active' : ''}}" wx:for="{{countryRegionOptions}}" wx:key="name" bindtap="selectCountry" data-index="{{index}}">
+            <view class="flag-art flag-art-{{item.flagKey}}"></view>
+            <text class="country-option-name">{{item.name}}</text>
+            <text wx:if="{{countryIndex === index}}" class="country-option-check">✓</text>
           </view>
         </view>
 

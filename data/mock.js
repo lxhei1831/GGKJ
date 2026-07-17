@@ -100,6 +100,26 @@ const countryRegions = [
   '中国香港',
 ]
 
+const countryRegionFlagKeys = {
+  美国: 'us',
+  欧盟: 'eu',
+  英国: 'uk',
+  加拿大: 'ca',
+  澳大利亚: 'au',
+  日本: 'jp',
+  韩国: 'kr',
+  东南亚: 'sea',
+  中国香港: 'hk',
+}
+
+const countryRegionOptions = countryRegions.map((name) => {
+  return {
+    name,
+    flagKey: countryRegionFlagKeys[name] || 'global',
+    label: name,
+  }
+})
+
 const aiAgents = [
   '商标风险助手',
   '图片侵权助手',
@@ -125,6 +145,7 @@ module.exports = {
   detectionModes,
   platforms,
   countryRegions,
+  countryRegionOptions,
   aiAgents,
   profileMenus,
 }

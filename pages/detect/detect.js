@@ -2,6 +2,7 @@ const {
   detectionModes,
   platforms,
   countryRegions,
+  countryRegionOptions,
 } = require('../../data/mock')
 const {
   detectRisk,
@@ -30,10 +31,13 @@ Page({
     modeTabs: detectionModes,
     platforms,
     countryRegions,
+    countryRegionOptions,
     platformIndex: 0,
     countryIndex: 0,
     selectedPlatform: platforms[0],
-    selectedCountryRegion: countryRegions[0],
+    selectedCountryRegion: countryRegionOptions[0].name,
+    selectedCountryFlagKey: countryRegionOptions[0].flagKey,
+    countryPanelVisible: false,
     activeMode: 'product',
     activeModeLabel: detectionModes[0].label,
     activeModeDesc: detectionModes[0].desc,
@@ -76,11 +80,24 @@ Page({
       result: null,
     })
   },
-  bindCountryChange(event) {
-    const countryIndex = Number(event.detail.value)
+  openCountrySelector() {
+    this.setData({
+      countryPanelVisible: true,
+    })
+  },
+  closeCountrySelector() {
+    this.setData({
+      countryPanelVisible: false,
+    })
+  },
+  selectCountry(event) {
+    const countryIndex = Number(event.currentTarget.dataset.index)
+    const selectedCountry = this.data.countryRegionOptions[countryIndex] || this.data.countryRegionOptions[0]
     this.setData({
       countryIndex,
-      selectedCountryRegion: this.data.countryRegions[countryIndex],
+      selectedCountryRegion: selectedCountry.name,
+      selectedCountryFlagKey: selectedCountry.flagKey,
+      countryPanelVisible: false,
       result: null,
     })
   },
