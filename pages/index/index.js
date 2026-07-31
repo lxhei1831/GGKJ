@@ -2,6 +2,10 @@ const {
   dashboardMetrics,
   successCases,
 } = require('../../data/mock')
+const {
+  buildTimelineShareMessage,
+  buildShareMessage,
+} = require('../../services/shareConfig')
 
 Page({
   data: {
@@ -18,5 +22,11 @@ Page({
     wx.navigateTo({
       url: `/pages/case-detail/case-detail?id=${id}`,
     })
+  },
+  onShareAppMessage() {
+    return buildShareMessage('/pages/index/index')
+  },
+  onShareTimeline() {
+    return buildTimelineShareMessage('/pages/index/index')
   },
 })

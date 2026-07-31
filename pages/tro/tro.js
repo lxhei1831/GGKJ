@@ -4,6 +4,10 @@ const {
 const {
   generateTroAdvice,
 } = require('../../services/troAdvice')
+const {
+  buildTimelineShareMessage,
+  buildShareMessage,
+} = require('../../services/shareConfig')
 
 const defaultCaseForm = {
   caseNo: '',
@@ -67,5 +71,11 @@ Page({
     wx.navigateTo({
       url: '/pages/lawyer/lawyer',
     })
+  },
+  onShareAppMessage() {
+    return buildShareMessage('/pages/tro/tro')
+  },
+  onShareTimeline() {
+    return buildTimelineShareMessage('/pages/tro/tro')
   },
 })

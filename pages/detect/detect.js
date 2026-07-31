@@ -12,6 +12,10 @@ const {
   getRecentReports,
   saveDetectionReport,
 } = require('../../services/reportStore')
+const {
+  buildTimelineShareMessage,
+  buildShareMessage,
+} = require('../../services/shareConfig')
 
 const defaultForm = {
   productUrl: '',
@@ -293,6 +297,12 @@ Page({
     })
     delete nextPayload.imageFiles
     return nextPayload
+  },
+  onShareAppMessage() {
+    return buildShareMessage('/pages/detect/detect')
+  },
+  onShareTimeline() {
+    return buildTimelineShareMessage('/pages/detect/detect')
   },
 })
 

@@ -13,6 +13,10 @@ const {
   updateProfile,
   uploadAvatar,
 } = require('../../services/authService')
+const {
+  buildTimelineShareMessage,
+  buildShareMessage,
+} = require('../../services/shareConfig')
 
 Page({
   data: {
@@ -216,6 +220,12 @@ Page({
       title: '会员支付待接入',
       icon: 'none',
     })
+  },
+  onShareAppMessage() {
+    return buildShareMessage('/pages/profile/profile')
+  },
+  onShareTimeline() {
+    return buildTimelineShareMessage('/pages/profile/profile')
   },
 })
 

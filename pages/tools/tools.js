@@ -1,3 +1,8 @@
+const {
+  buildTimelineShareMessage,
+  buildShareMessage,
+} = require('../../services/shareConfig')
+
 Page({
   data: {
     platformTemplates: [
@@ -18,5 +23,11 @@ Page({
     wx.navigateTo({
       url: '/pages/ai-chat/ai-chat',
     })
+  },
+  onShareAppMessage() {
+    return buildShareMessage('/pages/tools/tools')
+  },
+  onShareTimeline() {
+    return buildTimelineShareMessage('/pages/tools/tools')
   },
 })
